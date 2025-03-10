@@ -5,8 +5,8 @@ import "fmt"
 type HeadProtocol string
 
 const (
-	HeadProtocolIP4 HeadProtocol = "ipv4"
-	HeadProtocolIP6 HeadProtocol = "ipv6"
+	HeadProtocolIP4 HeadProtocol = "ip4"
+	HeadProtocolIP6 HeadProtocol = "ip6"
 )
 
 type TransportProtocol string
@@ -32,8 +32,8 @@ type addresses []Addr
 
 func (a addresses) String() []string {
 	ret := make([]string, len(a))
-	for _, addr := range a {
-		ret = append(ret, addr.String())
+	for i, addr := range a {
+		ret[i] = addr.String()
 	}
 
 	return ret
