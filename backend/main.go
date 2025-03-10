@@ -1,30 +1,32 @@
 package main
 
 import (
-	"github.com/dirty-bro-tech/peers-touch-go"
-	"net/http"
+	"context"
 
-	"github.com/dirty-bro-tech/peers-touch-go/core/server"
-	"github.com/dirty-bro-tech/peers-touch-go/core/service"
-	ns "github.com/dirty-bro-tech/peers-touch-go/core/service/native"
+	"github.com/dirty-bro-tech/peers-touch-station/registry"
+	"github.com/dirty-bro-tech/peers-touch-station/registry/libp2p"
 )
 
 func main() {
-	s := ns.NewService(service.WithHandlers(
-		server.NewHandler("hello-world", "/hello", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte("hello world"))
-		}))))
-	p := peers.NewPeer()
-	err := p.Init(
-		peers.WithName("peers.touch.station"),
-		peers.WithCore(s),
-	)
+	reg, err := libp2p.NewRegistry()
 	if err != nil {
-		panic(err)
+		return
 	}
 
-	err = p.Start()
+	err = reg.Init(context.Background(),
+		registry.KeyFile("demo.key"),
+		registry.Addresses(registry.Addr{
+			HeadProtocol:      registry.HeadProtocolIP4,
+			Address:           "0.0.0.0",
+			TransportProtocol: registry.TransportProtocolTCP,
+			Port:              4002,
+		}))
 	if err != nil {
-		panic(err)
+		return
+	}
+
+	err = reg.Start(context.Background())
+	if err != nil {
+		return
 	}
 }
