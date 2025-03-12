@@ -22,14 +22,14 @@ import (
 	ma "github.com/multiformats/go-multiaddr"
 )
 
-type Registry struct {
+type Relay struct {
 	opts *relay.Options
 
 	initiated  bool
 	initDoOnce sync.Once
 }
 
-func (r *Registry) Init(ctx context.Context, opts ...relay.Option) error {
+func (r *Relay) Init(ctx context.Context, opts ...relay.Option) error {
 	if r.opts == nil {
 		r.opts = &relay.Options{}
 	}
@@ -42,7 +42,7 @@ func (r *Registry) Init(ctx context.Context, opts ...relay.Option) error {
 	return nil
 }
 
-func (r *Registry) Start(ctx context.Context, opts ...relay.Option) error {
+func (r *Relay) Start(ctx context.Context, opts ...relay.Option) error {
 	r.initDoOnce.Do(func() {
 		if !r.initiated {
 			log.Warn(ctx, "libp2p registry server should be initiated first.")
@@ -116,16 +116,16 @@ func (r *Registry) Start(ctx context.Context, opts ...relay.Option) error {
 	return nil
 }
 
-func (r *Registry) Options() *relay.Options {
+func (r *Relay) Options() *relay.Options {
 	return r.opts
 }
 
-func (r *Registry) List(ctx context.Context, opts ...relay.GetOption) ([]relay.Peer, error) {
+func (r *Relay) List(ctx context.Context, opts ...relay.GetOption) ([]relay.Peer, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (r *Registry) isRegisteredWithRelay(h host.Host, relayID peer.ID) bool {
+func (r *Relay) isRegisteredWithRelay(h host.Host, relayID peer.ID) bool {
 	for _, conn := range h.Network().Conns() {
 		// Check connection direction and protocols
 		if conn.RemotePeer() == relayID {
@@ -139,8 +139,8 @@ func (r *Registry) isRegisteredWithRelay(h host.Host, relayID peer.ID) bool {
 	return false
 }
 
-func NewRegistry(opts ...relay.Option) (*Registry, error) {
-	r := &Registry{}
+func NewRegistry(opts ...relay.Option) (*Relay, error) {
+	r := &Relay{}
 	for _, opt := range opts {
 		opt(r.opts)
 	}
@@ -184,7 +184,7 @@ func initDHT(ctx context.Context, h host.Host, mode dht.ModeOpt) *dht.IpfsDHT {
 	return kdht
 }
 
-func (r *Registry) discoverPeers(ctx context.Context, h host.Host, discovery *routing.RoutingDiscovery) {
+func (r *Relay) discoverPeers(ctx context.Context, h host.Host, discovery *routing.RoutingDiscovery) {
 	for {
 		peerChan, err := discovery.FindPeers(ctx, "peers-network")
 		if err != nil {

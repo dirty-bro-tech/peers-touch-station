@@ -4,7 +4,7 @@ import (
 	"context"
 )
 
-type Registry interface {
+type Relay interface {
 	Init(ctx context.Context, opts ...Option) error
 	Start(ctx context.Context, opts ...Option) error
 	Options() Options
