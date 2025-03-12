@@ -1,4 +1,4 @@
-package registry
+package relay
 
 import "fmt"
 

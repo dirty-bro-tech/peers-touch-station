@@ -5,30 +5,33 @@ import (
 	"crypto/rand"
 	"fmt"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
 	log "github.com/dirty-bro-tech/peers-touch-go/core/logger"
-	"github.com/dirty-bro-tech/peers-touch-station/registry"
+	"github.com/dirty-bro-tech/peers-touch-station/relay"
 	"github.com/libp2p/go-libp2p"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/libp2p/go-libp2p/core/host"
+	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/p2p/discovery/routing"
 	"github.com/libp2p/go-libp2p/p2p/discovery/util"
-	"github.com/libp2p/go-libp2p/p2p/protocol/circuitv2/relay"
+	relayLib "github.com/libp2p/go-libp2p/p2p/protocol/circuitv2/relay"
+	ma "github.com/multiformats/go-multiaddr"
 )
 
 type Registry struct {
-	opts *registry.Options
+	opts *relay.Options
 
 	initiated  bool
 	initDoOnce sync.Once
 }
 
-func (r *Registry) Init(ctx context.Context, opts ...registry.Option) error {
+func (r *Registry) Init(ctx context.Context, opts ...relay.Option) error {
 	if r.opts == nil {
-		r.opts = &registry.Options{}
+		r.opts = &relay.Options{}
 	}
 
 	for _, o := range opts {
@@ -39,7 +42,7 @@ func (r *Registry) Init(ctx context.Context, opts ...registry.Option) error {
 	return nil
 }
 
-func (r *Registry) Start(ctx context.Context, opts ...registry.Option) error {
+func (r *Registry) Start(ctx context.Context, opts ...relay.Option) error {
 	r.initDoOnce.Do(func() {
 		if !r.initiated {
 			log.Warn(ctx, "libp2p registry server should be initiated first.")
@@ -61,13 +64,15 @@ func (r *Registry) Start(ctx context.Context, opts ...registry.Option) error {
 			// libp2p.ListenAddrStrings(fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", *port)),
 			libp2p.ListenAddrStrings(r.opts.Addresses.String()...),
 			libp2p.Identity(privKey),
+			libp2p.EnableRelay(),
+			libp2p.EnableNATService(),
 		)
 		if err != nil {
 			log.Fatalf(ctx, "Failed to create host: %v", err)
 		}
 
 		// Create and start relay service
-		_, err = relay.New(h)
+		_, err = relayLib.New(h)
 		if err != nil {
 			log.Fatalf(ctx, "Failed to start relay service: %v", err)
 		}
@@ -79,7 +84,7 @@ func (r *Registry) Start(ctx context.Context, opts ...registry.Option) error {
 		// Advertise our presence
 		util.Advertise(context.Background(), discovery, "peers-network")
 		// Start peer discovery
-		go discoverPeers(ctx, h, discovery)
+		go r.discoverPeers(ctx, h, discovery)
 
 		// Print server information
 		fmt.Println("Relay and bootstrap server running with:")
@@ -88,6 +93,22 @@ func (r *Registry) Start(ctx context.Context, opts ...registry.Option) error {
 			fmt.Printf(" - Address: %s/p2p/%s\n", addr, h.ID())
 		}
 
+		go func() {
+			ticker := time.NewTicker(5 * time.Minute)
+			defer ticker.Stop()
+
+			for {
+				select {
+				case <-ticker.C:
+					for _, pid := range h.Peerstore().Peers() {
+						if r.isRegisteredWithRelay(h, pid) {
+							log.Infof(ctx, "Active relay registration: %s", pid)
+						}
+					}
+				}
+			}
+		}()
+
 		// Keep the server running
 		select {}
 	})
@@ -95,16 +116,30 @@ func (r *Registry) Start(ctx context.Context, opts ...registry.Option) error {
 	return nil
 }
 
-func (r *Registry) Options() *registry.Options {
+func (r *Registry) Options() *relay.Options {
 	return r.opts
 }
 
-func (r *Registry) List(ctx context.Context, opts ...registry.GetOption) ([]registry.Peer, error) {
+func (r *Registry) List(ctx context.Context, opts ...relay.GetOption) ([]relay.Peer, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func NewRegistry(opts ...registry.Option) (*Registry, error) {
+func (r *Registry) isRegisteredWithRelay(h host.Host, relayID peer.ID) bool {
+	for _, conn := range h.Network().Conns() {
+		// Check connection direction and protocols
+		if conn.RemotePeer() == relayID {
+			for _, proto := range conn.RemoteMultiaddr().Protocols() {
+				if proto.Code == ma.P_CIRCUIT {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
+func NewRegistry(opts ...relay.Option) (*Registry, error) {
 	r := &Registry{}
 	for _, opt := range opts {
 		opt(r.opts)
@@ -149,9 +184,9 @@ func initDHT(ctx context.Context, h host.Host, mode dht.ModeOpt) *dht.IpfsDHT {
 	return kdht
 }
 
-func discoverPeers(ctx context.Context, h host.Host, discovery *routing.RoutingDiscovery) {
+func (r *Registry) discoverPeers(ctx context.Context, h host.Host, discovery *routing.RoutingDiscovery) {
 	for {
-		peerChan, err := discovery.FindPeers(context.Background(), "peers-network")
+		peerChan, err := discovery.FindPeers(ctx, "peers-network")
 		if err != nil {
 			log.Infof(ctx, "Error finding peers: %v", err)
 			time.Sleep(1 * time.Minute)
@@ -159,12 +194,29 @@ func discoverPeers(ctx context.Context, h host.Host, discovery *routing.RoutingD
 		}
 
 		for peer := range peerChan {
-			if peer.ID == h.ID() || len(peer.Addrs) == 0 {
+			if r.isRegisteredWithRelay(h, peer.ID) {
+				log.Infof(ctx, "Already registered with relay: %s", peer.ID)
 				continue
 			}
-			fmt.Printf("Discovered peer: %s\n", peer.ID)
+			// ... rest of existing peer handling code ...
 		}
 
 		time.Sleep(1 * time.Minute)
+	}
+}
+
+func connectToBootstrap(h host.Host, peers string) {
+	for _, addr := range strings.Split(peers, ",") {
+		maddr, _ := ma.NewMultiaddr(addr)
+		pi, _ := peer.AddrInfoFromP2pAddr(maddr)
+
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		if err := h.Connect(ctx, *pi); err != nil {
+			fmt.Printf("Failed to connect to bootstrap %s: %v\n", addr, err)
+		} else {
+			fmt.Printf("Connected to bootstrap: %s\n", addr)
+		}
 	}
 }

@@ -14,11 +14,11 @@ func main() {
 	}
 
 	err = reg.Init(context.Background(),
-		registry.KeyFile("demo.key"),
-		registry.Addresses(registry.Addr{
-			HeadProtocol:      registry.HeadProtocolIP4,
+		relay.KeyFile("demo.key"),
+		relay.Addresses(relay.Addr{
+			HeadProtocol:      relay.HeadProtocolIP4,
 			Address:           "0.0.0.0",
-			TransportProtocol: registry.TransportProtocolTCP,
+			TransportProtocol: relay.TransportProtocolTCP,
 			Port:              4002,
 		}))
 	if err != nil {
