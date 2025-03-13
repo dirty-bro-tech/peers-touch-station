@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	log "github.com/dirty-bro-tech/peers-touch-go/core/logger"
+	"github.com/dirty-bro-tech/peers-touch-go/core/server"
 	"github.com/dirty-bro-tech/peers-touch-station/utils"
 	"github.com/libp2p/go-libp2p"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
@@ -15,6 +17,19 @@ import (
 type BootstrapServer struct {
 	host host.Host
 	dht  *dht.IpfsDHT
+}
+
+func (bs *BootstrapServer) Name() string {
+	return "libp2p-bootstrap"
+}
+
+func (bs *BootstrapServer) Port() int {
+	return bs.host
+}
+
+func (bs *BootstrapServer) Status() server.ServerStatus {
+	//TODO implement me
+	panic("implement me")
 }
 
 func NewBootstrapServer(ctx context.Context, listenAddr string, keyFile string) (*BootstrapServer, error) {
@@ -33,23 +48,28 @@ func NewBootstrapServer(ctx context.Context, listenAddr string, keyFile string) 
 		return nil, fmt.Errorf("failed to create host: %w", err)
 	}
 
-	// Initialize DHT in server mode
-	kdht := utils.InitDHT(ctx, h, dht.ModeServer)
-
-	// Print server information
-	fmt.Println("Bootstrap server running with:")
-	fmt.Printf(" - Peer ID: %s\n", h.ID())
-	for _, addr := range h.Addrs() {
-		fmt.Printf(" - Address: %s/p2p/%s\n", addr, h.ID())
-	}
-
 	return &BootstrapServer{
 		host: h,
-		dht:  kdht,
 	}, nil
 }
 
-func (bs *BootstrapServer) Start(ctx context.Context) {
+// Init initializes the bootstrap server
+func (bs *BootstrapServer) Init(ctx context.Context, opts ...server.SubServerOption) error {
+	// todo
+	return nil
+}
+
+func (bs *BootstrapServer) Start(ctx context.Context, opts ...server.SubServerOption) {
+	// Initialize DHT in server mode
+	bs.dht = bs.initDHT(ctx, bs.host, dht.ModeServer)
+
+	// Print server information
+	fmt.Println("Bootstrap server running with:")
+	fmt.Printf(" - Peer ID: %s\n", bs.host.ID())
+	for _, addr := range bs.host.Addrs() {
+		fmt.Printf(" - Address: %s/p2p/%s\n", addr, bs.host.ID())
+	}
+
 	// Keep the server running
 	ticker := time.NewTicker(1 * time.Minute)
 	defer ticker.Stop()
@@ -73,7 +93,7 @@ func (bs *BootstrapServer) Start(ctx context.Context) {
 }
 
 // ListPeers returns a list of all peer IDs currently connected to the bootstrap server
-func (bs *BootstrapServer) ListPeers() []peer.ID {
+func (bs *BootstrapServer) ListPeers(ctx context.Context) []peer.ID {
 	var connectedPeers []peer.ID
 
 	// Get all peers from peerstore
@@ -92,16 +112,28 @@ func (bs *BootstrapServer) ListPeers() []peer.ID {
 	return connectedPeers
 }
 
-func (bs *BootstrapServer) GetAddrInfo() peer.AddrInfo {
+func (bs *BootstrapServer) GetAddrInfo(ctx context.Context) peer.AddrInfo {
 	return peer.AddrInfo{
 		ID:    bs.host.ID(),
 		Addrs: bs.host.Addrs(),
 	}
 }
 
-func (bs *BootstrapServer) Stop() error {
+func (bs *BootstrapServer) Stop(ctx context.Context) error {
 	if err := bs.dht.Close(); err != nil {
 		return err
 	}
 	return bs.host.Close()
+}
+
+func (bs *BootstrapServer) initDHT(ctx context.Context, h host.Host, mode dht.ModeOpt) *dht.IpfsDHT {
+	kdht, err := dht.New(ctx, h, dht.Mode(mode))
+	if err != nil {
+		log.Fatal(ctx, err)
+	}
+
+	if err = kdht.Bootstrap(ctx); err != nil {
+		log.Fatal(ctx, err)
+	}
+	return kdht
 }

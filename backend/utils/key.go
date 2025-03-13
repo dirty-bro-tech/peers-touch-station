@@ -2,8 +2,9 @@ package utils
 
 import (
 	"crypto/rand"
-	"github.com/libp2p/go-libp2p/core/crypto"
 	"os"
+	
+	"github.com/libp2p/go-libp2p/core/crypto"
 )
 
 func LoadOrGenerateKey(keyFile string) (crypto.PrivKey, error) {

@@ -3,30 +3,50 @@ package main
 import (
 	"context"
 	"fmt"
-	"os"
-	"os/signal"
-	"syscall"
+	"net/http"
 	"time"
 
+	"github.com/cloudwego/hertz/pkg/app"
+	"github.com/dirty-bro-tech/peers-touch-go"
+	"github.com/dirty-bro-tech/peers-touch-go/core/server"
 	bootstrapP2p "github.com/dirty-bro-tech/peers-touch-station/bootstrap/libp2p"
 	"github.com/dirty-bro-tech/peers-touch-station/relay"
 	"github.com/dirty-bro-tech/peers-touch-station/relay/libp2p"
 )
 
 func main() {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	// Setup signal handling for graceful shutdown
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	ctx := context.Background()
 
 	// Start bootstrap server
 	bootstrapServer, err := bootstrapP2p.NewBootstrapServer(ctx, "/ip4/0.0.0.0/tcp/4001", "demo.key")
 	if err != nil {
 		panic(err)
 	}
-	go bootstrapServer.Start(ctx)
+
+	p := peers.NewPeer()
+	err = p.Init(
+		ctx,
+		peers.WithName("hello-world"),
+		peers.WithAppendHandlers(
+			server.NewHandler("hello-world", "/hello", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Write([]byte("hello world, from native handler"))
+			})),
+			server.NewHandler("hello-world-hertz", "/hello-hz",
+				func(c context.Context, ctx *app.RequestContext) {
+					ctx.String(http.StatusOK, "hello world, from hertz handler")
+				},
+			),
+		),
+		peers.WithSubServer(bootstrapServer),
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	err = p.Start(ctx)
+	if err != nil {
+		panic(err)
+	}
 
 	// Add peer printer ticker
 	go func() {
@@ -36,7 +56,7 @@ func main() {
 		for {
 			select {
 			case <-ticker.C:
-				peers := bootstrapServer.ListPeers()
+				peers := bootstrapServer.ListPeers(ctx)
 				fmt.Printf("Connected peers (%d):\n", len(peers))
 				for _, peer := range peers {
 					fmt.Println(" -", peer)
@@ -70,10 +90,6 @@ func main() {
 			panic(err)
 		}
 	}()
-
-	// Wait for shutdown signal
-	<-sigChan
-	cancel()
 
 	// Graceful shutdown
 	/*if err :=reg.Stop(); err != nil {

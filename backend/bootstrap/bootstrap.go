@@ -2,15 +2,16 @@ package bootstrap
 
 import (
 	"context"
+
+	"github.com/dirty-bro-tech/peers-touch-go/core/server"
 	"github.com/libp2p/go-libp2p/core/peer"
 )
 
 // Bootstrap defines the interface for bootstrap server functionality
 type Bootstrap interface {
-	Start(ctx context.Context) error
-	Stop() error
-	ListPeers() []peer.ID
-	GetAddrInfo() peer.AddrInfo
+	server.SubServer
+	ListPeers(ctx context.Context) []peer.ID
+	GetAddrInfo(ctx context.Context) peer.AddrInfo
 }
 
 // Options holds configuration options for the bootstrap server
