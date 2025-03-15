@@ -24,7 +24,8 @@ func (bs *BootstrapServer) Name() string {
 }
 
 func (bs *BootstrapServer) Port() int {
-	return bs.host
+	// TODO implement me
+	return 0
 }
 
 func (bs *BootstrapServer) Status() server.ServerStatus {
@@ -54,12 +55,12 @@ func NewBootstrapServer(ctx context.Context, listenAddr string, keyFile string) 
 }
 
 // Init initializes the bootstrap server
-func (bs *BootstrapServer) Init(ctx context.Context, opts ...server.SubServerOption) error {
+func (bs *BootstrapServer) Init(ctx context.Context) error {
 	// todo
 	return nil
 }
 
-func (bs *BootstrapServer) Start(ctx context.Context, opts ...server.SubServerOption) {
+func (bs *BootstrapServer) Start(ctx context.Context) {
 	// Initialize DHT in server mode
 	bs.dht = bs.initDHT(ctx, bs.host, dht.ModeServer)
 
