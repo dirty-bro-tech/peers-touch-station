@@ -3,15 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
-	"net/http"
-	"time"
-
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/dirty-bro-tech/peers-touch-go"
 	"github.com/dirty-bro-tech/peers-touch-go/core/server"
 	bootstrapP2p "github.com/dirty-bro-tech/peers-touch-station/bootstrap/libp2p"
 	"github.com/dirty-bro-tech/peers-touch-station/relay"
 	"github.com/dirty-bro-tech/peers-touch-station/relay/libp2p"
+	"net/http"
+	"time"
 )
 
 func main() {
@@ -19,6 +18,24 @@ func main() {
 
 	// Start bootstrap server
 	bootstrapServer, err := bootstrapP2p.NewBootstrapServer(ctx, "/ip4/0.0.0.0/tcp/4001", "demo.key")
+	if err != nil {
+		panic(err)
+	}
+
+	// Start relay server
+	reg, err := libp2p.NewRegistry()
+	if err != nil {
+		panic(err)
+	}
+
+	err = reg.Init(ctx,
+		relay.KeyFile("demo.key"),
+		relay.Addresses(relay.Addr{
+			HeadProtocol:      relay.HeadProtocolIP4,
+			Address:           "0.0.0.0",
+			TransportProtocol: relay.TransportProtocolTCP,
+			Port:              4002,
+		}))
 	if err != nil {
 		panic(err)
 	}
@@ -38,12 +55,8 @@ func main() {
 			),
 		),
 		peers.WithSubServer(bootstrapServer),
+		peers.WithSubServer(reg),
 	)
-	if err != nil {
-		panic(err)
-	}
-
-	err = p.Start(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -67,35 +80,8 @@ func main() {
 		}
 	}()
 
-	// Start relay server
-	reg, err := libp2p.NewRegistry()
+	err = p.Start(ctx)
 	if err != nil {
-		panic(err)
-	}
-
-	err = reg.Init(ctx,
-		relay.KeyFile("demo.key"),
-		relay.Addresses(relay.Addr{
-			HeadProtocol:      relay.HeadProtocolIP4,
-			Address:           "0.0.0.0",
-			TransportProtocol: relay.TransportProtocolTCP,
-			Port:              4002,
-		}))
-	if err != nil {
-		panic(err)
-	}
-
-	go func() {
-		if err := reg.Start(ctx); err != nil {
-			panic(err)
-		}
-	}()
-
-	// Graceful shutdown
-	/*if err :=reg.Stop(); err != nil {
-		panic(err)
-	}*/
-	if err := bootstrapServer.Stop(); err != nil {
 		panic(err)
 	}
 }
