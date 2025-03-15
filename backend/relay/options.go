@@ -1,6 +1,13 @@
 package relay
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+
+	"github.com/dirty-bro-tech/peers-touch-go/core/server"
+)
+
+type optionsKey struct{}
 
 type HeadProtocol string
 
@@ -40,21 +47,27 @@ func (a addresses) String() []string {
 }
 
 type Options struct {
+	*server.SubServerOptions
+
 	Addresses addresses
 	KeyFile   string
 }
 
 type Option func(*Options)
 
-func KeyFile(keyFile string) Option {
-	return func(o *Options) {
-		o.KeyFile = keyFile
+func KeyFile(keyFile string) server.SubServerOption {
+	return func(o *server.SubServerOptions) {
+		optionWrap(o, func(opts *Options) {
+			opts.KeyFile = keyFile
+		})
 	}
 }
 
-func Addresses(adds ...Addr) Option {
-	return func(o *Options) {
-		o.Addresses = append(o.Addresses, adds...)
+func Addresses(adds ...Addr) server.SubServerOption {
+	return func(o *server.SubServerOptions) {
+		optionWrap(o, func(opts *Options) {
+			opts.Addresses = append(opts.Addresses, adds...)
+		})
 	}
 }
 
@@ -62,3 +75,19 @@ type GetOptions struct {
 }
 
 type GetOption func(*GetOptions)
+
+func optionWrap(o *server.SubServerOptions, f func(*Options)) {
+	if o.Ctx == nil {
+		o.Ctx = context.Background()
+	}
+
+	var opts *Options
+	if o.Ctx.Value(optionsKey{}) == nil {
+		opts = &Options{}
+		o.Ctx = context.WithValue(o.Ctx, optionsKey{}, opts)
+	} else {
+		opts = o.Ctx.Value(optionsKey{}).(*Options)
+	}
+
+	f(opts)
+}

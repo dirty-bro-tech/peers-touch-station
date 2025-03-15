@@ -24,7 +24,7 @@ func (bs *BootstrapServer) Name() string {
 }
 
 func (bs *BootstrapServer) Port() int {
-	// TODO implement me
+	// todo implement me
 	return 0
 }
 
@@ -60,37 +60,41 @@ func (bs *BootstrapServer) Init(ctx context.Context) error {
 	return nil
 }
 
-func (bs *BootstrapServer) Start(ctx context.Context) {
-	// Initialize DHT in server mode
-	bs.dht = bs.initDHT(ctx, bs.host, dht.ModeServer)
+func (bs *BootstrapServer) Start(ctx context.Context, opts ...server.SubServerOption) error {
+	go func() {
+		// Initialize DHT in server mode
+		bs.dht = bs.initDHT(ctx, bs.host, dht.ModeServer)
 
-	// Print server information
-	fmt.Println("Bootstrap server running with:")
-	fmt.Printf(" - Peer ID: %s\n", bs.host.ID())
-	for _, addr := range bs.host.Addrs() {
-		fmt.Printf(" - Address: %s/p2p/%s\n", addr, bs.host.ID())
-	}
+		// Print server information
+		fmt.Println("Bootstrap server running with:")
+		fmt.Printf(" - Peer ID: %s\n", bs.host.ID())
+		for _, addr := range bs.host.Addrs() {
+			fmt.Printf(" - Address: %s/p2p/%s\n", addr, bs.host.ID())
+		}
 
-	// Keep the server running
-	ticker := time.NewTicker(1 * time.Minute)
-	defer ticker.Stop()
+		// Keep the server running
+		ticker := time.NewTicker(1 * time.Minute)
+		defer ticker.Stop()
 
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-ticker.C:
-			// Print connected peers
-			peers := bs.host.Peerstore().Peers()
-			fmt.Printf("Connected peers (%d):\n", len(peers))
-			for _, pid := range peers {
-				if pid == bs.host.ID() {
-					continue
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				// Print connected peers
+				peers := bs.host.Peerstore().Peers()
+				fmt.Printf("Connected peers (%d):\n", len(peers))
+				for _, pid := range peers {
+					if pid == bs.host.ID() {
+						continue
+					}
+					fmt.Printf(" - %s\n", pid)
 				}
-				fmt.Printf(" - %s\n", pid)
 			}
 		}
-	}
+	}()
+
+	return nil
 }
 
 // ListPeers returns a list of all peer IDs currently connected to the bootstrap server

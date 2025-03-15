@@ -7,6 +7,8 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 )
 
+type optionsKey struct{}
+
 // Bootstrap defines the interface for bootstrap server functionality
 type Bootstrap interface {
 	server.SubServer
@@ -24,16 +26,20 @@ type Options struct {
 type Option func(*Options)
 
 // WithListenAddr sets the listen address for the bootstrap server
-func WithListenAddr(addr string) Option {
-	return func(o *Options) {
-		o.ListenAddr = addr
+func WithListenAddr(addr string) server.SubServerOption {
+	return func(o *server.SubServerOptions) {
+		optionWrap(o, func(opts *Options) {
+			opts.ListenAddr = addr
+		})
 	}
 }
 
 // WithKeyFile sets the path to the private key file
-func WithKeyFile(keyFile string) Option {
-	return func(o *Options) {
-		o.KeyFile = keyFile
+func WithKeyFile(keyFile string) server.SubServerOption {
+	return func(o *server.SubServerOptions) {
+		optionWrap(o, func(opts *Options) {
+			opts.KeyFile = keyFile
+		})
 	}
 }
 
@@ -49,4 +55,20 @@ func NewOptions(opts ...Option) *Options {
 	}
 
 	return options
+}
+
+func optionWrap(o *server.SubServerOptions, f func(*Options)) {
+	if o.Ctx == nil {
+		o.Ctx = context.Background()
+	}
+
+	var opts *Options
+	if o.Ctx.Value(optionsKey{}) == nil {
+		opts = &Options{}
+		o.Ctx = context.WithValue(o.Ctx, optionsKey{}, opts)
+	} else {
+		opts = o.Ctx.Value(optionsKey{}).(*Options)
+	}
+
+	f(opts)
 }

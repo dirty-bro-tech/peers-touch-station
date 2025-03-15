@@ -10,6 +10,7 @@ import (
 	"time"
 
 	log "github.com/dirty-bro-tech/peers-touch-go/core/logger"
+	"github.com/dirty-bro-tech/peers-touch-go/core/server"
 	"github.com/dirty-bro-tech/peers-touch-station/relay"
 	"github.com/libp2p/go-libp2p"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
@@ -29,88 +30,128 @@ type Relay struct {
 	initDoOnce sync.Once
 }
 
-func (r *Relay) Init(ctx context.Context, opts ...relay.Option) error {
+func (r *Relay) Stop(ctx context.Context) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (r *Relay) Name() string {
+	return "libp2p-relay"
+}
+
+func (r *Relay) Port() int {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (r *Relay) Status() server.ServerStatus {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (r *Relay) Init(ctx context.Context, opts ...server.SubServerOption) error {
 	if r.opts == nil {
-		r.opts = &relay.Options{}
+		r.opts = &relay.Options{
+			SubServerOptions: &server.SubServerOptions{},
+		}
 	}
 
 	for _, o := range opts {
-		o(r.opts)
+		o(r.opts.SubServerOptions)
 	}
 
 	r.initiated = true
 	return nil
 }
 
-func (r *Relay) Start(ctx context.Context, opts ...relay.Option) error {
+func (r *Relay) Start(ctx context.Context, opts ...server.SubServerOption) error {
+	var h host.Host
+	var cancel context.CancelFunc
+
 	r.initDoOnce.Do(func() {
-		if !r.initiated {
-			log.Warn(ctx, "libp2p registry server should be initiated first.")
-			return
-		}
+		ctx, cancel = context.WithCancel(ctx)
 
-		for _, opt := range opts {
-			opt(r.opts)
-		}
+		go func(h host.Host) {
+			defer cancel()
 
-		// Load or generate private key
-		privKey, err := loadOrGenerateKey(r.opts.KeyFile)
-		if err != nil {
-			log.Fatalf(ctx, "Failed to handle private key: %v", err)
-		}
+			if !r.initiated {
+				log.Warn(ctx, "libp2p registry server should be initiated first.")
+				return
+			}
+			for _, opt := range opts {
+				opt(r.opts.SubServerOptions)
+			}
 
-		// Create host with custom identity
-		h, err := libp2p.New(
-			// libp2p.ListenAddrStrings(fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", *port)),
-			libp2p.ListenAddrStrings(r.opts.Addresses.String()...),
-			libp2p.Identity(privKey),
-			libp2p.EnableRelay(),
-			libp2p.EnableNATService(),
-		)
-		if err != nil {
-			log.Fatalf(ctx, "Failed to create host: %v", err)
-		}
+			// Load or generate private key
+			privKey, err := loadOrGenerateKey(r.opts.KeyFile)
+			if err != nil {
+				log.Fatalf(ctx, "Failed to handle private key: %v", err)
+			}
 
-		// Create and start relay service
-		_, err = relayLib.New(h)
-		if err != nil {
-			log.Fatalf(ctx, "Failed to start relay service: %v", err)
-		}
+			// Create host with custom identity
+			h, err = libp2p.New(
+				// libp2p.ListenAddrStrings(fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", *port)),
+				libp2p.ListenAddrStrings(r.opts.Addresses.String()...),
+				libp2p.Identity(privKey),
+				libp2p.EnableRelay(),
+				libp2p.EnableNATService(),
+			)
+			if err != nil {
+				log.Fatalf(ctx, "Failed to create host: %v", err)
+			}
 
-		// Initialize DHT in server mode
-		kdht := initDHT(context.Background(), h, dht.ModeServer)
-		// Create routing discovery
-		discovery := routing.NewRoutingDiscovery(kdht)
-		// Advertise our presence
-		util.Advertise(context.Background(), discovery, "peers-network")
-		// Start peer discovery
-		go r.discoverPeers(ctx, h, discovery)
+			// Create and start relay service
+			_, err = relayLib.New(h)
+			if err != nil {
+				log.Fatalf(ctx, "Failed to start relay service: %v", err)
+			}
 
-		// Print server information
-		fmt.Println("Relay and bootstrap server running with:")
-		fmt.Printf(" - Peer ID: %s\n", h.ID())
-		for _, addr := range h.Addrs() {
-			fmt.Printf(" - Address: %s/p2p/%s\n", addr, h.ID())
-		}
+			// Initialize DHT in server mode
+			kdht := initDHT(context.Background(), h, dht.ModeServer)
+			// Create routing discovery
+			discovery := routing.NewRoutingDiscovery(kdht)
+			// Advertise our presence
+			util.Advertise(context.Background(), discovery, "peers-network")
+			// Start peer discovery
+			go r.discoverPeers(ctx, h, discovery)
 
-		go func() {
-			ticker := time.NewTicker(5 * time.Minute)
-			defer ticker.Stop()
+			// Print server information
+			fmt.Println("Relay and bootstrap server running with:")
+			fmt.Printf(" - Peer ID: %s\n", h.ID())
+			for _, addr := range h.Addrs() {
+				fmt.Printf(" - Address: %s/p2p/%s\n", addr, h.ID())
+			}
 
-			for {
-				select {
-				case <-ticker.C:
-					for _, pid := range h.Peerstore().Peers() {
-						if r.isRegisteredWithRelay(h, pid) {
-							log.Infof(ctx, "Active relay registration: %s", pid)
+			go func(h host.Host) {
+				ticker := time.NewTicker(5 * time.Minute)
+				defer ticker.Stop()
+				defer h.Close()
+
+				for {
+					select {
+					case <-ticker.C:
+						for _, pid := range h.Peerstore().Peers() {
+							if r.isRegisteredWithRelay(h, pid) {
+								log.Infof(ctx, "Active relay registration: %s", pid)
+							}
 						}
+					case <-ctx.Done():
+						log.Info(ctx, "Stopping relay monitoring")
+						return
 					}
 				}
-			}
-		}()
+			}(h)
 
-		// Keep the server running
-		select {}
+			// Modified server loop
+			select {
+			case <-ctx.Done():
+				log.Info(ctx, "Relay server shutting down")
+				err = h.Close()
+				if err != nil {
+					log.Fatalf(ctx, "Failed to close libp2p host: %v", err)
+				}
+			}
+		}(h)
 	})
 
 	return nil

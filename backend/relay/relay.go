@@ -2,11 +2,12 @@ package relay
 
 import (
 	"context"
+	"github.com/dirty-bro-tech/peers-touch-go/core/server"
 )
 
 type Relay interface {
-	Init(ctx context.Context, opts ...Option) error
-	Start(ctx context.Context, opts ...Option) error
+	server.SubServer
+
 	Options() Options
 	List(ctx context.Context, opts ...GetOption) ([]Peer, error)
 }
