@@ -4,13 +4,13 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
+	"github.com/dirty-bro-tech/peers-touch-go/core/server"
 	"os"
 	"strings"
 	"sync"
 	"time"
 
 	log "github.com/dirty-bro-tech/peers-touch-go/core/logger"
-	"github.com/dirty-bro-tech/peers-touch-go/core/server"
 	"github.com/dirty-bro-tech/peers-touch-station/relay"
 	"github.com/libp2p/go-libp2p"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
@@ -54,10 +54,17 @@ func (r *Relay) Init(ctx context.Context, opts ...server.SubServerOption) error 
 		r.opts = &relay.Options{
 			SubServerOptions: &server.SubServerOptions{},
 		}
+
+		r.opts.Ctx = ctx
 	}
 
 	for _, o := range opts {
-		o(r.opts.SubServerOptions)
+		r.opts.Apply(o)
+	}
+
+	if r.opts.KeyFile == "" {
+		log.Fatalf(ctx, "no key file provided")
+		return fmt.Errorf("no key file provided")
 	}
 
 	r.initiated = true
@@ -85,7 +92,7 @@ func (r *Relay) Start(ctx context.Context, opts ...server.SubServerOption) error
 			// Load or generate private key
 			privKey, err := loadOrGenerateKey(r.opts.KeyFile)
 			if err != nil {
-				log.Fatalf(ctx, "Failed to handle private key: %v", err)
+				log.Fatalf(ctx, "Failed to handle private key[%s]: %v", r.opts.KeyFile, err)
 			}
 
 			// Create host with custom identity
@@ -116,10 +123,10 @@ func (r *Relay) Start(ctx context.Context, opts ...server.SubServerOption) error
 			go r.discoverPeers(ctx, h, discovery)
 
 			// Print server information
-			fmt.Println("Relay and bootstrap server running with:")
-			fmt.Printf(" - Peer ID: %s\n", h.ID())
+			log.Infof(ctx, "Relay server running with:")
+			log.Infof(ctx, " - Peer ID: %s", h.ID())
 			for _, addr := range h.Addrs() {
-				fmt.Printf(" - Address: %s/p2p/%s\n", addr, h.ID())
+				log.Infof(ctx, " - Address: %s/p2p/%s", addr, h.ID())
 			}
 
 			go func(h host.Host) {
@@ -180,12 +187,20 @@ func (r *Relay) isRegisteredWithRelay(h host.Host, relayID peer.ID) bool {
 	return false
 }
 
-func NewRegistry(opts ...relay.Option) (*Relay, error) {
-	r := &Relay{}
-	for _, opt := range opts {
-		opt(r.opts)
+func NewRegistry(ctx context.Context, opts ...server.SubServerOption) *Relay {
+	rs := &Relay{
+		opts: &relay.Options{
+			SubServerOptions: &server.SubServerOptions{
+				Ctx: ctx,
+			},
+		},
 	}
-	return r, nil
+
+	for _, o := range opts {
+		rs.opts.Apply(o)
+	}
+
+	return rs
 }
 
 func loadOrGenerateKey(keyFile string) (crypto.PrivKey, error) {

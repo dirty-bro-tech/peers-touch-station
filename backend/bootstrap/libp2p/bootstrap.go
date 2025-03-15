@@ -3,10 +3,11 @@ package libp2p
 import (
 	"context"
 	"fmt"
+	"github.com/dirty-bro-tech/peers-touch-go/core/server"
 	"time"
 
 	log "github.com/dirty-bro-tech/peers-touch-go/core/logger"
-	"github.com/dirty-bro-tech/peers-touch-go/core/server"
+	"github.com/dirty-bro-tech/peers-touch-station/bootstrap"
 	"github.com/dirty-bro-tech/peers-touch-station/utils"
 	"github.com/libp2p/go-libp2p"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
@@ -15,6 +16,8 @@ import (
 )
 
 type BootstrapServer struct {
+	opts *bootstrap.Options
+
 	host host.Host
 	dht  *dht.IpfsDHT
 }
@@ -33,30 +36,51 @@ func (bs *BootstrapServer) Status() server.ServerStatus {
 	panic("implement me")
 }
 
-func NewBootstrapServer(ctx context.Context, listenAddr string, keyFile string) (*BootstrapServer, error) {
-	// Load or generate private key
-	privKey, err := utils.LoadOrGenerateKey(keyFile)
-	if err != nil {
-		return nil, fmt.Errorf("failed to handle private key: %w", err)
+func NewBootstrapServer(ctx context.Context, opts ...server.SubServerOption) *BootstrapServer {
+	bs := &BootstrapServer{
+		opts: &bootstrap.Options{
+			SubServerOptions: &server.SubServerOptions{
+				Ctx: ctx,
+			},
+		},
 	}
 
-	// Create host
-	h, err := libp2p.New(
-		libp2p.ListenAddrStrings(listenAddr),
-		libp2p.Identity(privKey),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create host: %w", err)
+	for _, o := range opts {
+		bs.opts.Apply(o)
 	}
 
-	return &BootstrapServer{
-		host: h,
-	}, nil
+	return bs
 }
 
 // Init initializes the bootstrap server
-func (bs *BootstrapServer) Init(ctx context.Context) error {
-	// todo
+func (bs *BootstrapServer) Init(ctx context.Context, opts ...server.SubServerOption) error {
+	if bs.opts == nil {
+		bs.opts = &bootstrap.Options{
+			SubServerOptions: &server.SubServerOptions{},
+		}
+
+		bs.opts.Ctx = ctx
+	}
+
+	for _, o := range opts {
+		bs.opts.Apply(o)
+	}
+
+	// Load or generate private key
+	privKey, err := utils.LoadOrGenerateKey(bs.opts.KeyFile)
+	if err != nil {
+		return fmt.Errorf("failed to handle private key: %w", err)
+	}
+
+	// Create host
+	bs.host, err = libp2p.New(
+		libp2p.ListenAddrStrings(bs.opts.ListenAddr),
+		libp2p.Identity(privKey),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create host: %w", err)
+	}
+
 	return nil
 }
 

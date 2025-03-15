@@ -3,7 +3,6 @@ package relay
 import (
 	"context"
 	"fmt"
-
 	"github.com/dirty-bro-tech/peers-touch-go/core/server"
 )
 
@@ -53,7 +52,12 @@ type Options struct {
 	KeyFile   string
 }
 
-type Option func(*Options)
+func (o *Options) Apply(opt server.SubServerOption) {
+	if o.Ctx.Value(optionsKey{}) == nil {
+		o.Ctx = context.WithValue(o.Ctx, optionsKey{}, o)
+	}
+	opt(o.SubServerOptions)
+}
 
 func KeyFile(keyFile string) server.SubServerOption {
 	return func(o *server.SubServerOptions) {
@@ -77,10 +81,6 @@ type GetOptions struct {
 type GetOption func(*GetOptions)
 
 func optionWrap(o *server.SubServerOptions, f func(*Options)) {
-	if o.Ctx == nil {
-		o.Ctx = context.Background()
-	}
-
 	var opts *Options
 	if o.Ctx.Value(optionsKey{}) == nil {
 		opts = &Options{}

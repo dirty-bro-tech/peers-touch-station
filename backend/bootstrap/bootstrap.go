@@ -2,7 +2,6 @@ package bootstrap
 
 import (
 	"context"
-
 	"github.com/dirty-bro-tech/peers-touch-go/core/server"
 	"github.com/libp2p/go-libp2p/core/peer"
 )
@@ -18,8 +17,17 @@ type Bootstrap interface {
 
 // Options holds configuration options for the bootstrap server
 type Options struct {
+	*server.SubServerOptions
+
 	ListenAddr string
 	KeyFile    string
+}
+
+func (o *Options) Apply(opt server.SubServerOption) {
+	if o.Ctx.Value(optionsKey{}) == nil {
+		o.Ctx = context.WithValue(o.Ctx, optionsKey{}, o)
+	}
+	opt(o.SubServerOptions)
 }
 
 // Option defines a function type for setting options
