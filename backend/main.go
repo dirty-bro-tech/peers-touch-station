@@ -82,7 +82,7 @@ func main() {
 		panic(err)
 	}
 
-	err = p.Start(ctx)
+	err = p.Start()
 	if err != nil {
 		panic(err)
 	}
