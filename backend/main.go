@@ -64,7 +64,7 @@ func main() {
 	err := p.Init(
 		ctx,
 		peers.WithName("hello-world"),
-		peers.WithAppendHandlers(
+		server.WithHandlers(
 			server.NewHandler("hello-world", "/hello", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Write([]byte("hello world, from native handler"))
 			})),
@@ -74,8 +74,8 @@ func main() {
 				},
 			),
 		),
-		peers.WithSubServer(bootstrapServer),
-		peers.WithSubServer(reg),
+		server.WithSubServer(bootstrapServer),
+		server.WithSubServer(reg),
 	)
 	if err != nil {
 		return
