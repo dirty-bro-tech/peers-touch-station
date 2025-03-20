@@ -2,13 +2,11 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
-
+	
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/dirty-bro-tech/peers-touch-go"
 	"github.com/dirty-bro-tech/peers-touch-go/core/server"
@@ -26,8 +24,8 @@ func main() {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
-	// Start bootstrap server
-	bootstrapServer := bootstrapP2p.NewBootstrapServer(ctx, bootstrap.WithListenAddr("/ip4/0.0.0.0/tcp/4001"), bootstrap.WithKeyFile("demo.key"))
+	/*// Start bootstrap server
+	bootstrapServer := bootstrapP2p.NewBootstrapServer(bootstrap.WithListenAddr("/ip4/0.0.0.0/tcp/4001"), bootstrap.WithKeyFile("demo.key"))
 	// Add peer printer ticker
 	go func() {
 		ticker := time.NewTicker(1 * time.Second)
@@ -48,17 +46,7 @@ func main() {
 				return
 			}
 		}
-	}()
-
-	// Start relay server
-	reg := libp2p.NewRegistry(ctx,
-		relay.KeyFile("demo.key"),
-		relay.Addresses(relay.Addr{
-			HeadProtocol:      relay.HeadProtocolIP4,
-			Address:           "0.0.0.0",
-			TransportProtocol: relay.TransportProtocolTCP,
-			Port:              4002,
-		}))
+	}()*/
 
 	p := peers.NewPeer()
 	err := p.Init(
@@ -74,8 +62,20 @@ func main() {
 				},
 			),
 		),
-		server.WithSubServer(bootstrapServer),
-		server.WithSubServer(reg),
+		server.WithSubServer("bootstrapServer",
+			bootstrapP2p.NewBootstrapServer,
+			bootstrap.WithListenAddr("/ip4/0.0.0.0/tcp/4001"),
+			bootstrap.WithKeyFile("demo.key")),
+		server.WithSubServer("relyServer", libp2p.NewRelay,
+			relay.KeyFile("demo.key"),
+			relay.Addresses(relay.Addr{
+				HeadProtocol:      relay.HeadProtocolIP4,
+				Address:           "0.0.0.0",
+				TransportProtocol: relay.TransportProtocolTCP,
+				Port:              4002,
+			},
+			),
+		),
 	)
 	if err != nil {
 		return

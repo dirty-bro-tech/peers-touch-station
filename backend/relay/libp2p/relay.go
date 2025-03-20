@@ -4,13 +4,14 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
-	"github.com/dirty-bro-tech/peers-touch-go/core/server"
 	"os"
 	"strings"
 	"sync"
 	"time"
 
 	log "github.com/dirty-bro-tech/peers-touch-go/core/logger"
+	"github.com/dirty-bro-tech/peers-touch-go/core/option"
+	"github.com/dirty-bro-tech/peers-touch-go/core/server"
 	"github.com/dirty-bro-tech/peers-touch-station/relay"
 	"github.com/libp2p/go-libp2p"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
@@ -28,6 +29,10 @@ type Relay struct {
 
 	initiated  bool
 	initDoOnce sync.Once
+}
+
+func (r *Relay) Handlers() []server.Handler {
+	return []server.Handler{}
 }
 
 func (r *Relay) Stop(ctx context.Context) error {
@@ -49,15 +54,7 @@ func (r *Relay) Status() server.ServerStatus {
 	panic("implement me")
 }
 
-func (r *Relay) Init(ctx context.Context, opts ...server.SubServerOption) error {
-	if r.opts == nil {
-		r.opts = &relay.Options{
-			SubServerOptions: &server.SubServerOptions{},
-		}
-
-		r.opts.Ctx = ctx
-	}
-
+func (r *Relay) Init(ctx context.Context, opts ...option.Option) error {
 	for _, o := range opts {
 		r.opts.Apply(o)
 	}
@@ -71,7 +68,7 @@ func (r *Relay) Init(ctx context.Context, opts ...server.SubServerOption) error 
 	return nil
 }
 
-func (r *Relay) Start(ctx context.Context, opts ...server.SubServerOption) error {
+func (r *Relay) Start(ctx context.Context, opts ...option.Option) error {
 	var h host.Host
 	var cancel context.CancelFunc
 
@@ -85,8 +82,9 @@ func (r *Relay) Start(ctx context.Context, opts ...server.SubServerOption) error
 				log.Warn(ctx, "libp2p registry server should be initiated first.")
 				return
 			}
+
 			for _, opt := range opts {
-				opt(r.opts.SubServerOptions)
+				r.opts.Apply(opt)
 			}
 
 			// Load or generate private key
@@ -187,12 +185,10 @@ func (r *Relay) isRegisteredWithRelay(h host.Host, relayID peer.ID) bool {
 	return false
 }
 
-func NewRegistry(ctx context.Context, opts ...server.SubServerOption) *Relay {
+func NewRelay(opts ...option.Option) server.SubServer {
 	rs := &Relay{
 		opts: &relay.Options{
-			SubServerOptions: &server.SubServerOptions{
-				Ctx: ctx,
-			},
+			SubServerOptions: server.GetSubServerOptions(opts...),
 		},
 	}
 

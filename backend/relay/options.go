@@ -1,14 +1,20 @@
 package relay
 
 import (
-	"context"
 	"fmt"
+	"github.com/dirty-bro-tech/peers-touch-go/core/option"
 	"github.com/dirty-bro-tech/peers-touch-go/core/server"
 )
 
 type optionsKey struct{}
 
 type HeadProtocol string
+
+var wrapper = option.NewWrapper[Options](optionsKey{}, func(options *option.Options) *Options {
+	return &Options{
+		SubServerOptions: server.NewSubServerOptionsFromRoot(),
+	}
+})
 
 const (
 	HeadProtocolIP4 HeadProtocol = "ip4"
@@ -52,42 +58,19 @@ type Options struct {
 	KeyFile   string
 }
 
-func (o *Options) Apply(opt server.SubServerOption) {
-	if o.Ctx.Value(optionsKey{}) == nil {
-		o.Ctx = context.WithValue(o.Ctx, optionsKey{}, o)
-	}
-	opt(o.SubServerOptions)
+func KeyFile(keyFile string) option.Option {
+	return wrapper.Wrap(func(opts *Options) {
+		opts.KeyFile = keyFile
+	})
 }
 
-func KeyFile(keyFile string) server.SubServerOption {
-	return func(o *server.SubServerOptions) {
-		optionWrap(o, func(opts *Options) {
-			opts.KeyFile = keyFile
-		})
-	}
-}
-
-func Addresses(adds ...Addr) server.SubServerOption {
-	return func(o *server.SubServerOptions) {
-		optionWrap(o, func(opts *Options) {
-			opts.Addresses = append(opts.Addresses, adds...)
-		})
-	}
+func Addresses(adds ...Addr) option.Option {
+	return wrapper.Wrap(func(opts *Options) {
+		opts.Addresses = append(opts.Addresses, adds...)
+	})
 }
 
 type GetOptions struct {
 }
 
 type GetOption func(*GetOptions)
-
-func optionWrap(o *server.SubServerOptions, f func(*Options)) {
-	var opts *Options
-	if o.Ctx.Value(optionsKey{}) == nil {
-		opts = &Options{}
-		o.Ctx = context.WithValue(o.Ctx, optionsKey{}, opts)
-	} else {
-		opts = o.Ctx.Value(optionsKey{}).(*Options)
-	}
-
-	f(opts)
-}

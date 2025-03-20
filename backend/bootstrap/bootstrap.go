@@ -2,11 +2,19 @@ package bootstrap
 
 import (
 	"context"
+
+	"github.com/dirty-bro-tech/peers-touch-go/core/option"
 	"github.com/dirty-bro-tech/peers-touch-go/core/server"
 	"github.com/libp2p/go-libp2p/core/peer"
 )
 
 type optionsKey struct{}
+
+var wrapper = option.NewWrapper[Options](optionsKey{}, func(options *option.Options) *Options {
+	return &Options{
+		SubServerOptions: server.NewSubServerOptionsFromRoot(),
+	}
+})
 
 // Bootstrap defines the interface for bootstrap server functionality
 type Bootstrap interface {
@@ -23,32 +31,21 @@ type Options struct {
 	KeyFile    string
 }
 
-func (o *Options) Apply(opt server.SubServerOption) {
-	if o.Ctx.Value(optionsKey{}) == nil {
-		o.Ctx = context.WithValue(o.Ctx, optionsKey{}, o)
-	}
-	opt(o.SubServerOptions)
-}
-
 // Option defines a function type for setting options
 type Option func(*Options)
 
 // WithListenAddr sets the listen address for the bootstrap server
-func WithListenAddr(addr string) server.SubServerOption {
-	return func(o *server.SubServerOptions) {
-		optionWrap(o, func(opts *Options) {
-			opts.ListenAddr = addr
-		})
-	}
+func WithListenAddr(addr string) option.Option {
+	return wrapper.Wrap(func(opts *Options) {
+		opts.ListenAddr = addr
+	})
 }
 
 // WithKeyFile sets the path to the private key file
-func WithKeyFile(keyFile string) server.SubServerOption {
-	return func(o *server.SubServerOptions) {
-		optionWrap(o, func(opts *Options) {
-			opts.KeyFile = keyFile
-		})
-	}
+func WithKeyFile(keyFile string) option.Option {
+	return wrapper.Wrap(func(opts *Options) {
+		opts.KeyFile = keyFile
+	})
 }
 
 // NewOptions creates a new Options instance with default values
@@ -63,20 +60,4 @@ func NewOptions(opts ...Option) *Options {
 	}
 
 	return options
-}
-
-func optionWrap(o *server.SubServerOptions, f func(*Options)) {
-	if o.Ctx == nil {
-		o.Ctx = context.Background()
-	}
-
-	var opts *Options
-	if o.Ctx.Value(optionsKey{}) == nil {
-		opts = &Options{}
-		o.Ctx = context.WithValue(o.Ctx, optionsKey{}, opts)
-	} else {
-		opts = o.Ctx.Value(optionsKey{}).(*Options)
-	}
-
-	f(opts)
 }

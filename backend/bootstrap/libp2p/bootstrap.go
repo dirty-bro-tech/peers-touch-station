@@ -3,10 +3,11 @@ package libp2p
 import (
 	"context"
 	"fmt"
-	"github.com/dirty-bro-tech/peers-touch-go/core/server"
 	"time"
 
 	log "github.com/dirty-bro-tech/peers-touch-go/core/logger"
+	"github.com/dirty-bro-tech/peers-touch-go/core/option"
+	"github.com/dirty-bro-tech/peers-touch-go/core/server"
 	"github.com/dirty-bro-tech/peers-touch-station/bootstrap"
 	"github.com/dirty-bro-tech/peers-touch-station/utils"
 	"github.com/libp2p/go-libp2p"
@@ -20,6 +21,12 @@ type BootstrapServer struct {
 
 	host host.Host
 	dht  *dht.IpfsDHT
+}
+
+func (bs *BootstrapServer) Handlers() []server.Handler {
+	return []server.Handler{
+		bs.ListPeersHandler(),
+	}
 }
 
 func (bs *BootstrapServer) Name() string {
@@ -36,32 +43,18 @@ func (bs *BootstrapServer) Status() server.ServerStatus {
 	panic("implement me")
 }
 
-func NewBootstrapServer(ctx context.Context, opts ...server.SubServerOption) *BootstrapServer {
+func NewBootstrapServer(opts ...option.Option) server.SubServer {
 	bs := &BootstrapServer{
 		opts: &bootstrap.Options{
-			SubServerOptions: &server.SubServerOptions{
-				Ctx: ctx,
-			},
+			SubServerOptions: server.GetSubServerOptions(opts...),
 		},
-	}
-
-	for _, o := range opts {
-		bs.opts.Apply(o)
 	}
 
 	return bs
 }
 
 // Init initializes the bootstrap server
-func (bs *BootstrapServer) Init(ctx context.Context, opts ...server.SubServerOption) error {
-	if bs.opts == nil {
-		bs.opts = &bootstrap.Options{
-			SubServerOptions: &server.SubServerOptions{},
-		}
-
-		bs.opts.Ctx = ctx
-	}
-
+func (bs *BootstrapServer) Init(ctx context.Context, opts ...option.Option) error {
 	for _, o := range opts {
 		bs.opts.Apply(o)
 	}
@@ -84,7 +77,7 @@ func (bs *BootstrapServer) Init(ctx context.Context, opts ...server.SubServerOpt
 	return nil
 }
 
-func (bs *BootstrapServer) Start(ctx context.Context, opts ...server.SubServerOption) error {
+func (bs *BootstrapServer) Start(ctx context.Context, opts ...option.Option) error {
 	go func() {
 		// Initialize DHT in server mode
 		bs.dht = bs.initDHT(ctx, bs.host, dht.ModeServer)
