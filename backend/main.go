@@ -6,7 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	
+
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/dirty-bro-tech/peers-touch-go"
 	"github.com/dirty-bro-tech/peers-touch-go/core/server"
@@ -14,6 +14,9 @@ import (
 	bootstrapP2p "github.com/dirty-bro-tech/peers-touch-station/bootstrap/libp2p"
 	"github.com/dirty-bro-tech/peers-touch-station/relay"
 	"github.com/dirty-bro-tech/peers-touch-station/relay/libp2p"
+
+	// default plugins
+	_ "github.com/dirty-bro-tech/peers-touch-go/core/plugin/native"
 )
 
 func main() {

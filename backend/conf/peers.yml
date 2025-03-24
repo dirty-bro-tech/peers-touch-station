@@ -3,14 +3,26 @@ peers:
     hierarchy-merge: true
   service:
     server:
-      name: "hertz"
+      name: hertz
       address: :8082
       metadata:
-        name: "foo"
-        value: "qux"
+        name: foo
+        value: qux
       native:
         enabled: true
-        some-key: "some-value"
+        some-key: some-value
       hertz:
         enabled: true
-        some-key: "some-value"
+        some-key: some-value
+    store:
+      name: native
+      native:
+        enabled: true
+        rds:
+          gorm:
+            - sqlite:
+                name: sqlite
+                driverName: sqlite
+                address: ./peers.db
+                timeout: 10s
+                SQLConnURL:

@@ -1,12 +1,16 @@
 module github.com/dirty-bro-tech/peers-touch-station
 
-go 1.23.5
+go 1.23.6
 
-replace github.com/dirty-bro-tech/peers-touch-go => ../../peers-touch-go
+replace (
+	github.com/dirty-bro-tech/peers-touch-go => ../../peers-touch-go
+	github.com/dirty-bro-tech/peers-touch-go/core/plugin/native => ../../peers-touch-go/core/plugin/native
+)
 
 require (
 	github.com/cloudwego/hertz v0.9.5
 	github.com/dirty-bro-tech/peers-touch-go v0.0.0-20250225165906-784631b05f38
+	github.com/dirty-bro-tech/peers-touch-go/core/plugin/native v0.0.0
 	github.com/libp2p/go-libp2p v0.41.0
 	github.com/libp2p/go-libp2p-kad-dht v0.30.2
 	github.com/multiformats/go-multiaddr v0.15.0
@@ -60,6 +64,8 @@ require (
 	github.com/ipld/go-ipld-prime v0.21.0 // indirect
 	github.com/jackpal/go-nat-pmp v1.0.2 // indirect
 	github.com/jbenet/go-temp-err-catcher v0.1.0 // indirect
+	github.com/jinzhu/inflection v1.0.0 // indirect
+	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.10 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.3 // indirect
@@ -156,5 +162,6 @@ require (
 	gonum.org/v1/gonum v0.15.1 // indirect
 	google.golang.org/protobuf v1.36.5 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
+	gorm.io/gorm v1.25.12 // indirect
 	lukechampine.com/blake3 v1.4.0 // indirect
 )
