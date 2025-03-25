@@ -5,12 +5,13 @@ go 1.23.6
 replace (
 	github.com/dirty-bro-tech/peers-touch-go => ../../peers-touch-go
 	github.com/dirty-bro-tech/peers-touch-go/core/plugin/native => ../../peers-touch-go/core/plugin/native
+	github.com/dirty-bro-tech/peers-touch-go/core/plugin/store/native => ../../peers-touch-go/core/plugin/store/native
 )
 
 require (
 	github.com/cloudwego/hertz v0.9.5
-	github.com/dirty-bro-tech/peers-touch-go v0.0.0-20250225165906-784631b05f38
-	github.com/dirty-bro-tech/peers-touch-go/core/plugin/native v0.0.0
+	github.com/dirty-bro-tech/peers-touch-go v0.0.0-20250324164259-952df2add43c
+	github.com/dirty-bro-tech/peers-touch-go/core/plugin/native v0.0.0-00010101000000-000000000000
 	github.com/libp2p/go-libp2p v0.41.0
 	github.com/libp2p/go-libp2p-kad-dht v0.30.2
 	github.com/multiformats/go-multiaddr v0.15.0
@@ -34,6 +35,7 @@ require (
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
 	github.com/davidlazar/go-crypto v0.0.0-20200604182044-b73af7476f6c // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.0 // indirect
+	github.com/dirty-bro-tech/peers-touch-go/core/plugin/store/native v0.0.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/elastic/gosigar v0.14.3 // indirect
 	github.com/flynn/noise v1.1.0 // indirect

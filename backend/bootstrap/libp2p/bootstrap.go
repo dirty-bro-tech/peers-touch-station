@@ -23,6 +23,10 @@ type BootstrapServer struct {
 	dht  *dht.IpfsDHT
 }
 
+func (bs *BootstrapServer) Options() *server.SubServerOptions {
+	return bs.opts.SubServerOptions
+}
+
 func (bs *BootstrapServer) Handlers() []server.Handler {
 	return []server.Handler{
 		bs.ListPeersHandler(),
@@ -45,11 +49,10 @@ func (bs *BootstrapServer) Status() server.ServerStatus {
 
 func NewBootstrapServer(opts ...option.Option) server.SubServer {
 	bs := &BootstrapServer{
-		opts: &bootstrap.Options{
-			SubServerOptions: server.GetSubServerOptions(opts...),
-		},
+		opts: bootstrap.BootstrapOptions(),
 	}
 
+	bs.opts.Apply(opts...)
 	return bs
 }
 

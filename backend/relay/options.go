@@ -11,9 +11,7 @@ type optionsKey struct{}
 type HeadProtocol string
 
 var wrapper = option.NewWrapper[Options](optionsKey{}, func(options *option.Options) *Options {
-	return &Options{
-		SubServerOptions: server.NewSubServerOptionsFromRoot(),
-	}
+	return BootstrapOptions()
 })
 
 const (

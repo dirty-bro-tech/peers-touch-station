@@ -60,7 +60,6 @@ func (r *Relay) Init(ctx context.Context, opts ...option.Option) error {
 	}
 
 	if r.opts.KeyFile == "" {
-		log.Fatalf(ctx, "no key file provided")
 		return fmt.Errorf("no key file provided")
 	}
 
@@ -187,15 +186,10 @@ func (r *Relay) isRegisteredWithRelay(h host.Host, relayID peer.ID) bool {
 
 func NewRelay(opts ...option.Option) server.SubServer {
 	rs := &Relay{
-		opts: &relay.Options{
-			SubServerOptions: server.GetSubServerOptions(opts...),
-		},
+		opts: relay.BootstrapOptions(),
 	}
 
-	for _, o := range opts {
-		rs.opts.Apply(o)
-	}
-
+	rs.opts.Apply(opts...)
 	return rs
 }
 
