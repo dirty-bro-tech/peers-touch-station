@@ -3,6 +3,8 @@ package libp2p
 import (
 	"context"
 	"fmt"
+	dht_pb "github.com/libp2p/go-libp2p-kad-dht/pb"
+	"github.com/libp2p/go-libp2p/core/network"
 	"time"
 
 	log "github.com/dirty-bro-tech/peers-touch-go/core/logger"
@@ -75,6 +77,11 @@ func (bs *BootstrapServer) Init(ctx context.Context, opts ...option.Option) erro
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create host: %w", err)
+	}
+
+	// After creating host
+	if bs.host != nil {
+		bs.host.Network().Notify(bs) // Register connection listener
 	}
 
 	return nil
@@ -152,13 +159,34 @@ func (bs *BootstrapServer) Stop(ctx context.Context) error {
 }
 
 func (bs *BootstrapServer) initDHT(ctx context.Context, h host.Host, mode dht.ModeOpt) *dht.IpfsDHT {
-	kdht, err := dht.New(ctx, h, dht.Mode(mode))
+	kdht, err := dht.New(ctx, h, dht.Mode(mode), dht.OnRequestHook(func(ctx context.Context, s network.Stream, req *dht_pb.Message) {
+		peerID := s.Conn().RemotePeer().String()
+		log.Info(ctx, "DHT request received",
+			"type", req.Type.String(),
+			"key", string(req.Key),
+			"peer", peerID[:8]+"...")
+	}))
 	if err != nil {
 		log.Fatal(ctx, err)
 	}
 
-	if err = kdht.Bootstrap(ctx); err != nil {
-		log.Fatal(ctx, err)
+	// Enhanced bootstrap with retry logic
+	const maxRetries = 3
+	for i := 0; i < maxRetries; i++ {
+		if err = kdht.Bootstrap(ctx); err == nil {
+			break
+		}
+		log.Warn(ctx, "DHT bootstrap attempt failed",
+			"attempt", i+1,
+			"error", err)
+		time.Sleep(time.Duration(i+1) * time.Second)
 	}
+	if err != nil {
+		log.Fatal(ctx, "Final DHT bootstrap failed after retries", err)
+	}
+
+	// Add periodic routing table logging
+	go bs.monitorRoutingTable(ctx, kdht)
+
 	return kdht
 }
