@@ -99,6 +99,7 @@ func (bs *BootstrapServer) Start(ctx context.Context, opts ...option.Option) err
 		for {
 			select {
 			case <-ctx.Done():
+				log.Infof(ctx, "bootstrap server stop, ctx done, reason[%s]", ctx.Err())
 				return
 			case <-ticker.C:
 				// Print connected peers

@@ -27,6 +27,7 @@ import (
 type Relay struct {
 	opts *relay.Options
 
+	h          host.Host
 	initiated  bool
 	initDoOnce sync.Once
 }
@@ -36,8 +37,13 @@ func (r *Relay) Handlers() []server.Handler {
 }
 
 func (r *Relay) Stop(ctx context.Context) error {
-	//TODO implement me
-	panic("implement me")
+	if r.h == nil {
+		return nil
+	}
+
+	// todo reset
+
+	return r.h.Close()
 }
 
 func (r *Relay) Name() string {
@@ -68,14 +74,14 @@ func (r *Relay) Init(ctx context.Context, opts ...option.Option) error {
 }
 
 func (r *Relay) Start(ctx context.Context, opts ...option.Option) error {
-	var h host.Host
 	var cancel context.CancelFunc
 
 	r.initDoOnce.Do(func() {
 		ctx, cancel = context.WithCancel(ctx)
-
-		go func(h host.Host) {
-			defer cancel()
+		go func() {
+			defer func() {
+				cancel()
+			}()
 
 			if !r.initiated {
 				log.Warn(ctx, "libp2p registry server should be initiated first.")
@@ -93,7 +99,7 @@ func (r *Relay) Start(ctx context.Context, opts ...option.Option) error {
 			}
 
 			// Create host with custom identity
-			h, err = libp2p.New(
+			r.h, err = libp2p.New(
 				// libp2p.ListenAddrStrings(fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", *port)),
 				libp2p.ListenAddrStrings(r.opts.Addresses.String()...),
 				libp2p.Identity(privKey),
@@ -105,25 +111,25 @@ func (r *Relay) Start(ctx context.Context, opts ...option.Option) error {
 			}
 
 			// Create and start relay service
-			_, err = relayLib.New(h)
+			_, err = relayLib.New(r.h)
 			if err != nil {
 				log.Fatalf(ctx, "Failed to start relay service: %v", err)
 			}
 
 			// Initialize DHT in server mode
-			kdht := initDHT(context.Background(), h, dht.ModeServer)
+			kdht := initDHT(context.Background(), r.h, dht.ModeServer)
 			// Create routing discovery
 			discovery := routing.NewRoutingDiscovery(kdht)
 			// Advertise our presence
 			util.Advertise(context.Background(), discovery, "peers-network")
 			// Start peer discovery
-			go r.discoverPeers(ctx, h, discovery)
+			go r.discoverPeers(ctx, r.h, discovery)
 
 			// Print server information
 			log.Infof(ctx, "Relay server running with:")
-			log.Infof(ctx, " - Peer ID: %s", h.ID())
-			for _, addr := range h.Addrs() {
-				log.Infof(ctx, " - Address: %s/p2p/%s", addr, h.ID())
+			log.Infof(ctx, " - Peer ID: %s", r.h.ID())
+			for _, addr := range r.h.Addrs() {
+				log.Infof(ctx, " - Address: %s/p2p/%s", addr, r.h.ID())
 			}
 
 			go func(h host.Host) {
@@ -144,18 +150,18 @@ func (r *Relay) Start(ctx context.Context, opts ...option.Option) error {
 						return
 					}
 				}
-			}(h)
+			}(r.h)
 
 			// Modified server loop
 			select {
 			case <-ctx.Done():
 				log.Info(ctx, "Relay server shutting down")
-				err = h.Close()
+				err = r.h.Close()
 				if err != nil {
 					log.Fatalf(ctx, "Failed to close libp2p host: %v", err)
 				}
 			}
-		}(h)
+		}()
 	})
 
 	return nil
