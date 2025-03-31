@@ -251,6 +251,11 @@ func (r *Relay) discoverPeers(ctx context.Context, h host.Host, discovery *routi
 				continue
 			}
 			// ... rest of existing peer handling code ...
+			if peer.ID == h.ID() {
+				continue
+			}
+
+			log.Infof(ctx, "ray found peer: %s", peer.ID)
 		}
 
 		time.Sleep(1 * time.Minute)

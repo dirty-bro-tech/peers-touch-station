@@ -116,7 +116,12 @@ func (bs *BootstrapServer) Start(ctx context.Context, opts ...option.Option) err
 					if pid == bs.host.ID() {
 						continue
 					}
-					fmt.Printf(" - %s\n", pid)
+
+					if bs.host.Network().Connectedness(pid) == 1 { // 1 means Connected
+						log.Infof(ctx, "peer is still connecting, peerId=[%s]", pid)
+					} else {
+						log.Infof(ctx, "peer not connected, peerId=[%s]", pid)
+					}
 				}
 			}
 		}
@@ -162,10 +167,7 @@ func (bs *BootstrapServer) Stop(ctx context.Context) error {
 func (bs *BootstrapServer) initDHT(ctx context.Context, h host.Host, mode dht.ModeOpt) *dht.IpfsDHT {
 	kdht, err := dht.New(ctx, h, dht.Mode(mode), dht.OnRequestHook(func(ctx context.Context, s network.Stream, req *dht_pb.Message) {
 		peerID := s.Conn().RemotePeer().String()
-		log.Info(ctx, "DHT request received",
-			"type", req.Type.String(),
-			"key", string(req.Key),
-			"peer", peerID[:8]+"...")
+		log.Infof(ctx, "DHT request received, type=[%s], peerId=[%s]", req.Type, peerID[:8]+"...")
 	}))
 	if err != nil {
 		log.Fatal(ctx, err)
@@ -177,9 +179,7 @@ func (bs *BootstrapServer) initDHT(ctx context.Context, h host.Host, mode dht.Mo
 		if err = kdht.Bootstrap(ctx); err == nil {
 			break
 		}
-		log.Warn(ctx, "DHT bootstrap attempt failed",
-			"attempt", i+1,
-			"error", err)
+		log.Warnf(ctx, "DHT bootstrap attempt failed, attempt=[%d], error: %s", i+1, err)
 		time.Sleep(time.Duration(i+1) * time.Second)
 	}
 	if err != nil {

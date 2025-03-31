@@ -18,27 +18,12 @@ func (bs *BootstrapServer) monitorRoutingTable(ctx context.Context, d *dht.IpfsD
 		select {
 		case <-ticker.C:
 			rt := d.RoutingTable()
-			logger.Info(ctx, "DHT routing table status",
-				"peerCount", rt.Size(),
-				"networkSize", bs.estimateNetworkSize(rt),
-				"latency", bs.calculatePeerLatency(rt))
+			logger.Infof(ctx, "DHT routing table status, peerCount=[%d], latency=[%d]", rt.Size(), bs.calculatePeerLatency(rt))
 		case <-ctx.Done():
+			logger.Warnf(ctx, "DHT routing table monitoring context done by %s", ctx.Err())
 			return
 		}
 	}
-}
-
-func (bs *BootstrapServer) estimateNetworkSize(rt *kb.RoutingTable) int {
-	// Use Kademlia's k-bucket structure to estimate network size
-	// Each successive bucket represents a doubling of the address space
-	buckets := rt.Buckets()
-	if len(buckets) == 0 {
-		return 0
-	}
-
-	// Last bucket depth indicates network size order of magnitude
-	lastBucketDepth := len(buckets) - 1
-	return (1 << uint(lastBucketDepth)) * rt.BucketSize()
 }
 
 func (bs *BootstrapServer) calculatePeerLatency(rt *kb.RoutingTable) time.Duration {
