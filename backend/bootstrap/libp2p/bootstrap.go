@@ -18,11 +18,17 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 )
 
+type connectEvent struct {
+	peerID peer.ID
+	msg    *dht_pb.Message
+}
+
 type BootstrapServer struct {
 	opts *bootstrap.Options
 
-	host host.Host
-	dht  *dht.IpfsDHT
+	connectChan chan connectEvent
+	host        host.Host
+	dht         *dht.IpfsDHT
 }
 
 func (bs *BootstrapServer) Options() *server.SubServerOptions {
@@ -79,6 +85,8 @@ func (bs *BootstrapServer) Init(ctx context.Context, opts ...option.Option) erro
 		return fmt.Errorf("failed to create host: %w", err)
 	}
 
+	bs.connectChan = make(chan connectEvent)
+
 	// After creating host
 	if bs.host != nil {
 		bs.host.Network().Notify(bs) // Register connection listener
@@ -108,21 +116,6 @@ func (bs *BootstrapServer) Start(ctx context.Context, opts ...option.Option) err
 			case <-ctx.Done():
 				log.Infof(ctx, "bootstrap server stop, ctx done, reason[%s]", ctx.Err())
 				return
-			case <-ticker.C:
-				// Print connected peers
-				peers := bs.host.Peerstore().Peers()
-				fmt.Printf("Connected peers (%d):\n", len(peers))
-				for _, pid := range peers {
-					if pid == bs.host.ID() {
-						continue
-					}
-
-					if bs.host.Network().Connectedness(pid) == 1 { // 1 means Connected
-						log.Infof(ctx, "peer is still connecting, peerId=[%s]", pid)
-					} else {
-						log.Infof(ctx, "peer not connected, peerId=[%s]", pid)
-					}
-				}
 			}
 		}
 	}()
@@ -166,8 +159,10 @@ func (bs *BootstrapServer) Stop(ctx context.Context) error {
 
 func (bs *BootstrapServer) initDHT(ctx context.Context, h host.Host, mode dht.ModeOpt) *dht.IpfsDHT {
 	kdht, err := dht.New(ctx, h, dht.Mode(mode), dht.OnRequestHook(func(ctx context.Context, s network.Stream, req *dht_pb.Message) {
-		peerID := s.Conn().RemotePeer().String()
-		log.Infof(ctx, "DHT request received, type=[%s], peerId=[%s]", req.Type, peerID[:8]+"...")
+		bs.connectChan <- connectEvent{
+			peerID: s.Conn().RemotePeer(),
+			msg:    req,
+		}
 	}))
 	if err != nil {
 		log.Fatal(ctx, err)
