@@ -3,8 +3,6 @@ package libp2p
 import (
 	"context"
 	"fmt"
-	dht_pb "github.com/libp2p/go-libp2p-kad-dht/pb"
-	"github.com/libp2p/go-libp2p/core/network"
 	"time"
 
 	log "github.com/dirty-bro-tech/peers-touch-go/core/logger"
@@ -14,7 +12,9 @@ import (
 	"github.com/dirty-bro-tech/peers-touch-station/utils"
 	"github.com/libp2p/go-libp2p"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
+	dht_pb "github.com/libp2p/go-libp2p-kad-dht/pb"
 	"github.com/libp2p/go-libp2p/core/host"
+	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
 )
 
