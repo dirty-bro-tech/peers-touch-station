@@ -1,0 +1,2 @@
+config:
+  postgresSQLDsn: host=localhost user=peer password=peer dbname=peer_native port=5432 sslmode=disable TimeZone=Asia/Shanghai

@@ -19,34 +19,6 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	go func() {
-		http.ListenAndServe("localhost:6060", nil)
-	}()
-
-	/*// Start bootstrap server
-	bootstrapServer := bootstrapP2p.NewBootstrapServer(bootstrap.WithListenAddr("/ip4/0.0.0.0/tcp/4001"), bootstrap.WithKeyFile("demo.key"))
-	// Add peer printer ticker
-	go func() {
-		ticker := time.NewTicker(1 * time.Second)
-		defer ticker.Stop()
-
-		// wait the bootstrap server completed init
-		time.Sleep(200 * time.Second)
-
-		for {
-			select {
-			case <-ticker.C:
-				listPeers := bootstrapServer.ListPeers(ctx)
-				fmt.Printf("Connected listPeers (%d):\n", len(listPeers))
-				for _, peer := range listPeers {
-					fmt.Println(" -", peer)
-				}
-			case <-ctx.Done():
-				return
-			}
-		}
-	}()*/
-
 	p := peers.NewPeer()
 	err := p.Init(
 		ctx,
