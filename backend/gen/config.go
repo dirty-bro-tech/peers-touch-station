@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+
 	"github.com/dirty-bro-tech/peers-touch-go/core/config"
 	"github.com/dirty-bro-tech/peers-touch-go/core/option"
 	"github.com/dirty-bro-tech/peers-touch-go/core/pkg/config/source/file"
@@ -30,10 +31,11 @@ func LoadConfig() {
 	err := config.NewConfig(
 		config.WithSources(
 			file.NewSource(
+				option.WithRootCtx(context.Background()),
 				file.WithPath("./config.yml"),
 			),
 		),
-	).Init(option.WithRootCtx(context.Background()))
+	).Init()
 	if err != nil {
 		panic(err)
 	}
