@@ -10,7 +10,7 @@ func main() {
 	LoadConfig()
 
 	g := gen.NewGenerator(gen.Config{
-		OutPath:      "./gorm",
+		OutPath:      "../gorm",
 		ModelPkgPath: "gorm",
 		Mode:         gen.WithoutContext | gen.WithDefaultQuery | gen.WithQueryInterface,
 	})

@@ -2,7 +2,7 @@ module github.com/dirty-bro-tech/peers-touch-station/gen
 
 go 1.23.6
 
-replace github.com/dirty-bro-tech/peers-touch-go => ../../../peers-touch-go
+replace github.com/dirty-bro-tech/peers-touch-go => ./../../../../peers-touch-go
 
 require (
 	github.com/dirty-bro-tech/peers-touch-go v0.0.0-20250331131431-f18826ee9308

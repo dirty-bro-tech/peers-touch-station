@@ -3,11 +3,13 @@ package libp2p
 import (
 	"context"
 	"fmt"
+	"github.com/dirty-bro-tech/peers-touch-go/core/plugin"
 	"time"
 
 	log "github.com/dirty-bro-tech/peers-touch-go/core/logger"
 	"github.com/dirty-bro-tech/peers-touch-go/core/option"
 	"github.com/dirty-bro-tech/peers-touch-go/core/server"
+	"github.com/dirty-bro-tech/peers-touch-go/core/store"
 	"github.com/dirty-bro-tech/peers-touch-station/bootstrap"
 	"github.com/dirty-bro-tech/peers-touch-station/utils"
 	"github.com/libp2p/go-libp2p"
@@ -16,6 +18,7 @@ import (
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
+	"gorm.io/gorm"
 )
 
 type connectEvent struct {
@@ -29,6 +32,8 @@ type BootstrapServer struct {
 	connectChan chan connectEvent
 	host        host.Host
 	dht         *dht.IpfsDHT
+
+	db *gorm.DB
 }
 
 func (bs *BootstrapServer) Options() *server.SubServerOptions {
@@ -90,6 +95,17 @@ func (bs *BootstrapServer) Init(ctx context.Context, opts ...option.Option) erro
 	// After creating host
 	if bs.host != nil {
 		bs.host.Network().Notify(bs) // Register connection listener
+	}
+
+	// init rds
+	// todo get rds by config
+	bs.db, err = store.GetRDS(ctx,
+		store.WithQueryStore(plugin.NativePluginName),
+		store.WithRDSName("peer_native"),
+		store.WithRDSDBName("public"),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to get rds: %w", err)
 	}
 
 	return nil

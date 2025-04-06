@@ -1,4 +1,5 @@
 peers:
+  includes: store.yml
   config:
     hierarchy-merge: true
   service:
@@ -14,15 +15,3 @@ peers:
       hertz:
         enabled: true
         some-key: some-value
-    store:
-      name: native
-      native:
-        enabled: true
-        rds:
-          gorm:
-            - sqlite:
-                name: sqlite
-                driverName: sqlite
-                address: ./peers.db
-                timeout: 10s
-                SQLConnURL:

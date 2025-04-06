@@ -6,15 +6,22 @@ replace (
 	github.com/dirty-bro-tech/peers-touch-go => ../../peers-touch-go
 	github.com/dirty-bro-tech/peers-touch-go/core/plugin/native => ../../peers-touch-go/core/plugin/native
 	github.com/dirty-bro-tech/peers-touch-go/core/plugin/store/native => ../../peers-touch-go/core/plugin/store/native
+	github.com/dirty-bro-tech/peers-touch-go/core/plugin/store/rds/postgres => ../../peers-touch-go/core/plugin/store/rds/postgres
+	github.com/dirty-bro-tech/peers-touch-go/core/plugin/store/rds/sqlite => ../../peers-touch-go/core/plugin/store/rds/sqlite
 )
 
 require (
 	github.com/cloudwego/hertz v0.9.5
 	github.com/dirty-bro-tech/peers-touch-go v0.0.0-20250324164259-952df2add43c
 	github.com/dirty-bro-tech/peers-touch-go/core/plugin/native v0.0.0-00010101000000-000000000000
+	github.com/dirty-bro-tech/peers-touch-go/core/plugin/store/native v0.0.0
+	github.com/dirty-bro-tech/peers-touch-go/core/plugin/store/rds/postgres v0.0.0-00010101000000-000000000000
+	github.com/dirty-bro-tech/peers-touch-go/core/plugin/store/rds/sqlite v0.0.0-00010101000000-000000000000
 	github.com/libp2p/go-libp2p v0.41.0
 	github.com/libp2p/go-libp2p-kad-dht v0.30.2
+	github.com/libp2p/go-libp2p-kbucket v0.6.5
 	github.com/multiformats/go-multiaddr v0.15.0
+	gorm.io/gorm v1.25.12
 )
 
 require (
@@ -35,7 +42,6 @@ require (
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
 	github.com/davidlazar/go-crypto v0.0.0-20200604182044-b73af7476f6c // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.0 // indirect
-	github.com/dirty-bro-tech/peers-touch-go/core/plugin/store/native v0.0.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/elastic/gosigar v0.14.3 // indirect
 	github.com/flynn/noise v1.1.0 // indirect
@@ -64,6 +70,10 @@ require (
 	github.com/ipfs/go-log v1.0.5 // indirect
 	github.com/ipfs/go-log/v2 v2.5.1 // indirect
 	github.com/ipld/go-ipld-prime v0.21.0 // indirect
+	github.com/jackc/pgpassfile v1.0.0 // indirect
+	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
+	github.com/jackc/pgx/v5 v5.5.5 // indirect
+	github.com/jackc/puddle/v2 v2.2.1 // indirect
 	github.com/jackpal/go-nat-pmp v1.0.2 // indirect
 	github.com/jbenet/go-temp-err-catcher v0.1.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
@@ -76,7 +86,6 @@ require (
 	github.com/libp2p/go-cidranger v1.1.0 // indirect
 	github.com/libp2p/go-flow-metrics v0.2.0 // indirect
 	github.com/libp2p/go-libp2p-asn-util v0.4.1 // indirect
-	github.com/libp2p/go-libp2p-kbucket v0.6.5 // indirect
 	github.com/libp2p/go-libp2p-record v0.3.1 // indirect
 	github.com/libp2p/go-libp2p-routing-helpers v0.7.5 // indirect
 	github.com/libp2p/go-msgio v0.3.0 // indirect
@@ -85,6 +94,7 @@ require (
 	github.com/libp2p/go-yamux/v5 v5.0.0 // indirect
 	github.com/marten-seemann/tcp v0.0.0-20210406111302-dfbc87cc63fd // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
+	github.com/mattn/go-sqlite3 v1.14.24 // indirect
 	github.com/miekg/dns v1.1.63 // indirect
 	github.com/mikioh/tcpinfo v0.0.0-20190314235526-30a79bb1804b // indirect
 	github.com/mikioh/tcpopt v0.0.0-20190314235656-172688c1accc // indirect
@@ -164,6 +174,7 @@ require (
 	gonum.org/v1/gonum v0.15.1 // indirect
 	google.golang.org/protobuf v1.36.5 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gorm.io/gorm v1.25.12 // indirect
+	gorm.io/driver/postgres v1.5.11 // indirect
+	gorm.io/driver/sqlite v1.5.7 // indirect
 	lukechampine.com/blake3 v1.4.0 // indirect
 )

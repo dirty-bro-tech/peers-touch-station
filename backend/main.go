@@ -13,6 +13,9 @@ import (
 
 	// default plugins
 	_ "github.com/dirty-bro-tech/peers-touch-go/core/plugin/native"
+	_ "github.com/dirty-bro-tech/peers-touch-go/core/plugin/store/native"
+	_ "github.com/dirty-bro-tech/peers-touch-go/core/plugin/store/rds/postgres"
+	_ "github.com/dirty-bro-tech/peers-touch-go/core/plugin/store/rds/sqlite"
 )
 
 func main() {

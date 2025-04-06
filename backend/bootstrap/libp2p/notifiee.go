@@ -1,13 +1,15 @@
 package libp2p
 
+// Add these methods to implement network.Notifiee interface
+
 import (
 	"context"
+
 	"github.com/dirty-bro-tech/peers-touch-go/core/logger"
 	"github.com/libp2p/go-libp2p/core/network"
 	ma "github.com/multiformats/go-multiaddr"
 )
 
-// Add these methods to implement network.Notifiee interface
 func (bs *BootstrapServer) Listen(network.Network, ma.Multiaddr)      {}
 func (bs *BootstrapServer) ListenClose(network.Network, ma.Multiaddr) {}
 func (bs *BootstrapServer) Connected(net network.Network, conn network.Conn) {
