@@ -26,6 +26,7 @@ func (bs *BootstrapServer) monitorRoutingTable(ctx context.Context, d *dht.IpfsD
 			rt.ListPeers()
 			logger.Infof(ctx, "DHT routing table status, peerCount=[%d], latency=[%d]", rt.Size(), bs.calculatePeerLatency(rt))
 		case connection := <-bs.connectChan:
+			// todo new context
 			logger.Infof(ctx, "DHT request received, type=[%s], peerId=[%s]", connection.msg.Type, connection.peerID[:8]+"...")
 
 			// New code: Insert into bootstrap_nodes

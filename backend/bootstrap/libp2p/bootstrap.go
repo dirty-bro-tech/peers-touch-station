@@ -3,14 +3,15 @@ package libp2p
 import (
 	"context"
 	"fmt"
-	"github.com/dirty-bro-tech/peers-touch-go/core/plugin"
 	"time"
 
 	log "github.com/dirty-bro-tech/peers-touch-go/core/logger"
 	"github.com/dirty-bro-tech/peers-touch-go/core/option"
+	"github.com/dirty-bro-tech/peers-touch-go/core/plugin"
 	"github.com/dirty-bro-tech/peers-touch-go/core/server"
 	"github.com/dirty-bro-tech/peers-touch-go/core/store"
 	"github.com/dirty-bro-tech/peers-touch-station/bootstrap"
+	dbModels "github.com/dirty-bro-tech/peers-touch-station/gen/gorm"
 	"github.com/dirty-bro-tech/peers-touch-station/utils"
 	"github.com/libp2p/go-libp2p"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
@@ -101,13 +102,17 @@ func (bs *BootstrapServer) Init(ctx context.Context, opts ...option.Option) erro
 	// todo get rds by config
 	bs.db, err = store.GetRDS(ctx,
 		store.WithQueryStore(plugin.NativePluginName),
-		store.WithRDSName("peer_native"),
-		store.WithRDSDBName("public"),
+		store.WithRDSName("sqlite"),
+		store.WithRDSDBName("main"),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to get rds: %w", err)
 	}
 
+	// create tables
+	if err = bs.db.AutoMigrate(&dbModels.BootstrapNode{}, &dbModels.BootstrapNodesHistory{}); err != nil {
+		return fmt.Errorf("failed to migrate db: %w", err)
+	}
 	return nil
 }
 
