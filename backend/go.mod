@@ -5,6 +5,7 @@ go 1.23.6
 replace (
 	github.com/dirty-bro-tech/peers-touch-go => ../../peers-touch-go
 	github.com/dirty-bro-tech/peers-touch-go/core/plugin/native => ../../peers-touch-go/core/plugin/native
+	github.com/dirty-bro-tech/peers-touch-go/core/plugin/registry/native => ../../peers-touch-go/core/plugin/registry/native
 	github.com/dirty-bro-tech/peers-touch-go/core/plugin/store/native => ../../peers-touch-go/core/plugin/store/native
 	github.com/dirty-bro-tech/peers-touch-go/core/plugin/store/rds/postgres => ../../peers-touch-go/core/plugin/store/rds/postgres
 	github.com/dirty-bro-tech/peers-touch-go/core/plugin/store/rds/sqlite => ../../peers-touch-go/core/plugin/store/rds/sqlite
@@ -14,6 +15,7 @@ require (
 	github.com/cloudwego/hertz v0.9.5
 	github.com/dirty-bro-tech/peers-touch-go v0.0.0-20250324164259-952df2add43c
 	github.com/dirty-bro-tech/peers-touch-go/core/plugin/native v0.0.0-00010101000000-000000000000
+	github.com/dirty-bro-tech/peers-touch-go/core/plugin/registry/native v0.0.0-20250411155725-63fa257c36f2
 	github.com/dirty-bro-tech/peers-touch-go/core/plugin/store/native v0.0.0
 	github.com/dirty-bro-tech/peers-touch-go/core/plugin/store/rds/postgres v0.0.0-00010101000000-000000000000
 	github.com/dirty-bro-tech/peers-touch-go/core/plugin/store/rds/sqlite v0.0.0-00010101000000-000000000000
@@ -56,7 +58,7 @@ require (
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/golang/protobuf v1.5.3 // indirect
+	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/gopacket v1.1.19 // indirect
 	github.com/google/pprof v0.0.0-20250208200701-d0013a598941 // indirect
 	github.com/google/uuid v1.6.0 // indirect

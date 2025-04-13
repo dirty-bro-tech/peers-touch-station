@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"net/http"
+
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/dirty-bro-tech/peers-touch-go"
 	"github.com/dirty-bro-tech/peers-touch-go/core/server"
@@ -9,10 +11,10 @@ import (
 	bootstrapP2p "github.com/dirty-bro-tech/peers-touch-station/bootstrap/libp2p"
 	"github.com/dirty-bro-tech/peers-touch-station/relay"
 	"github.com/dirty-bro-tech/peers-touch-station/relay/libp2p"
-	"net/http"
 
 	// default plugins
 	_ "github.com/dirty-bro-tech/peers-touch-go/core/plugin/native"
+	_ "github.com/dirty-bro-tech/peers-touch-go/core/plugin/registry/native"
 	_ "github.com/dirty-bro-tech/peers-touch-go/core/plugin/store/native"
 	_ "github.com/dirty-bro-tech/peers-touch-go/core/plugin/store/rds/postgres"
 	_ "github.com/dirty-bro-tech/peers-touch-go/core/plugin/store/rds/sqlite"
