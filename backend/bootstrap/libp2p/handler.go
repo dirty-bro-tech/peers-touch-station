@@ -12,7 +12,7 @@ import (
 func (bs *BootstrapServer) ListPeersHandler() server.Handler {
 	return server.NewHandler("listBoostrapPeers", "/cgi_bin/bootstrap",
 		func(c context.Context, ctx *app.RequestContext) {
-			listPeers := bs.ListPeers(context.Background())
+			listPeers := bs.ListPeers(c)
 			fmt.Printf("Connected listPeers (%d):\n", len(listPeers))
 			for _, peer := range listPeers {
 				fmt.Println(" -", peer)

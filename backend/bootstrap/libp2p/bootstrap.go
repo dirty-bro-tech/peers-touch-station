@@ -22,6 +22,10 @@ import (
 	"gorm.io/gorm"
 )
 
+var (
+	_ server.SubServer = (*BootstrapServer)(nil)
+)
+
 type connectEvent struct {
 	peerID peer.ID
 	msg    *dht_pb.Message
