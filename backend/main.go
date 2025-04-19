@@ -7,6 +7,7 @@ import (
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/dirty-bro-tech/peers-touch-go"
 	"github.com/dirty-bro-tech/peers-touch-go/core/server"
+	"github.com/dirty-bro-tech/peers-touch-go/core/service"
 	"github.com/dirty-bro-tech/peers-touch-station/bootstrap"
 	bootstrapP2p "github.com/dirty-bro-tech/peers-touch-station/bootstrap/libp2p"
 	"github.com/dirty-bro-tech/peers-touch-station/relay"
@@ -27,7 +28,7 @@ func main() {
 	p := peers.NewPeer()
 	err := p.Init(
 		ctx,
-		peers.WithName("hello-world"),
+		service.Name("peers-touch-station"),
 		server.WithHandlers(
 			server.NewHandler("hello-world", "/hello", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Write([]byte("hello world, from native handler"))
