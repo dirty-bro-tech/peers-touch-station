@@ -1,4 +1,5 @@
 peers:
+  run-mode: 2
   includes: store.yml
   config:
     hierarchy-merge: true
@@ -17,3 +18,4 @@ peers:
         some-key: some-value
     registry:
       retry-interval: 10s
+      try-add-peer-manually: true
