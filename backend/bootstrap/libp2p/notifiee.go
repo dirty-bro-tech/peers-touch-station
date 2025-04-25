@@ -13,9 +13,9 @@ import (
 func (bs *BootstrapServer) Listen(network.Network, ma.Multiaddr)      {}
 func (bs *BootstrapServer) ListenClose(network.Network, ma.Multiaddr) {}
 func (bs *BootstrapServer) Connected(net network.Network, conn network.Conn) {
-	logger.Info(context.Background(), "New client connection",
-		"peerID", conn.RemotePeer(),
-		"remoteAddress", conn.RemoteMultiaddr())
+	logger.Info(context.Background(), "New client connection: ",
+		"peerID: ", conn.RemotePeer(),
+		", remoteAddress: ", conn.RemoteMultiaddr())
 }
 func (bs *BootstrapServer) Disconnected(net network.Network, conn network.Conn) {}
 func (bs *BootstrapServer) OpenedStream(net network.Network, s network.Stream)  {}

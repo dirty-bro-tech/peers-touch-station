@@ -3,27 +3,28 @@ package libp2p
 import (
 	"context"
 	"fmt"
-	"time"
 
 	log "github.com/dirty-bro-tech/peers-touch-go/core/logger"
 	"github.com/dirty-bro-tech/peers-touch-go/core/option"
 	"github.com/dirty-bro-tech/peers-touch-go/core/plugin"
+	"github.com/dirty-bro-tech/peers-touch-go/core/plugin/registry/native"
 	"github.com/dirty-bro-tech/peers-touch-go/core/server"
 	"github.com/dirty-bro-tech/peers-touch-go/core/store"
 	"github.com/dirty-bro-tech/peers-touch-station/bootstrap"
 	dbModels "github.com/dirty-bro-tech/peers-touch-station/gen/gorm"
-	"github.com/dirty-bro-tech/peers-touch-station/utils"
-	"github.com/libp2p/go-libp2p"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	dht_pb "github.com/libp2p/go-libp2p-kad-dht/pb"
 	"github.com/libp2p/go-libp2p/core/host"
-	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"gorm.io/gorm"
 )
 
 var (
 	_ server.SubServer = (*BootstrapServer)(nil)
+)
+
+var (
+	connectChan = make(chan connectEvent)
 )
 
 type connectEvent struct {
@@ -34,9 +35,8 @@ type connectEvent struct {
 type BootstrapServer struct {
 	opts *bootstrap.Options
 
-	connectChan chan connectEvent
-	host        host.Host
-	dht         *dht.IpfsDHT
+	host host.Host
+	dht  *dht.IpfsDHT
 
 	db *gorm.DB
 }
@@ -80,22 +80,11 @@ func (bs *BootstrapServer) Init(ctx context.Context, opts ...option.Option) erro
 		bs.opts.Apply(o)
 	}
 
-	// Load or generate private key
-	privKey, err := utils.LoadOrGenerateKey(bs.opts.KeyFile)
-	if err != nil {
-		return fmt.Errorf("failed to handle private key: %w", err)
+	// todo: temporary solution
+	bs.host, bs.dht = native.GetLibp2pHost()
+	if bs.host == nil {
+		return fmt.Errorf("host is nil, import native libp2p registry first")
 	}
-
-	// Create host
-	bs.host, err = libp2p.New(
-		libp2p.ListenAddrStrings(bs.opts.ListenAddr),
-		libp2p.Identity(privKey),
-	)
-	if err != nil {
-		return fmt.Errorf("failed to create host: %w", err)
-	}
-
-	bs.connectChan = make(chan connectEvent)
 
 	// After creating host
 	if bs.host != nil {
@@ -103,6 +92,7 @@ func (bs *BootstrapServer) Init(ctx context.Context, opts ...option.Option) erro
 	}
 
 	// init rds
+	var err error
 	// todo get rds by config
 	bs.db, err = store.GetRDS(ctx,
 		store.WithQueryStore(plugin.NativePluginName),
@@ -122,20 +112,6 @@ func (bs *BootstrapServer) Init(ctx context.Context, opts ...option.Option) erro
 
 func (bs *BootstrapServer) Start(ctx context.Context, opts ...option.Option) error {
 	go func() {
-		// Initialize DHT in server mode
-		bs.dht = bs.initDHT(ctx, bs.host, dht.ModeServer)
-
-		// Print server information
-		fmt.Println("Bootstrap server running with:")
-		fmt.Printf(" - Peer ID: %s\n", bs.host.ID())
-		for _, addr := range bs.host.Addrs() {
-			fmt.Printf(" - Address: %s/p2p/%s\n", addr, bs.host.ID())
-		}
-
-		// Keep the server running
-		ticker := time.NewTicker(1 * time.Minute)
-		defer ticker.Stop()
-
 		for {
 			select {
 			case <-ctx.Done():
@@ -182,32 +158,7 @@ func (bs *BootstrapServer) Stop(ctx context.Context) error {
 	return bs.host.Close()
 }
 
-func (bs *BootstrapServer) initDHT(ctx context.Context, h host.Host, mode dht.ModeOpt) *dht.IpfsDHT {
-	kdht, err := dht.New(ctx, h, dht.Mode(mode), dht.OnRequestHook(func(ctx context.Context, s network.Stream, req *dht_pb.Message) {
-		bs.connectChan <- connectEvent{
-			peerID: s.Conn().RemotePeer(),
-			msg:    req,
-		}
-	}))
-	if err != nil {
-		log.Fatal(ctx, err)
-	}
-
-	// Enhanced bootstrap with retry logic
-	const maxRetries = 3
-	for i := 0; i < maxRetries; i++ {
-		if err = kdht.Bootstrap(ctx); err == nil {
-			break
-		}
-		log.Warnf(ctx, "DHT bootstrap attempt failed, attempt=[%d], error: %s", i+1, err)
-		time.Sleep(time.Duration(i+1) * time.Second)
-	}
-	if err != nil {
-		log.Fatal(ctx, "Final DHT bootstrap failed after retries", err)
-	}
-
+func (bs *BootstrapServer) initMonitor(ctx context.Context) {
 	// Add periodic routing table logging
-	go bs.monitorRoutingTable(ctx, kdht)
-
-	return kdht
+	go bs.monitorRoutingTable(ctx, bs.dht)
 }

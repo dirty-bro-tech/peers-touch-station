@@ -18,4 +18,6 @@ peers:
         some-key: some-value
     registry:
       retry-interval: 10s
-      try-add-peer-manually: true
+      native:
+        enable-mdns: true
+        try-add-peer-manually: true

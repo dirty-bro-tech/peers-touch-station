@@ -30,7 +30,6 @@ type Options struct {
 	*server.SubServerOptions
 
 	ListenAddr string
-	KeyFile    string
 }
 
 // Option defines a function type for setting options
@@ -40,13 +39,6 @@ type Option func(*Options)
 func WithListenAddr(addr string) option.Option {
 	return OptionWrapper.Wrap(func(opts *Options) {
 		opts.ListenAddr = addr
-	})
-}
-
-// WithKeyFile sets the path to the private key file
-func WithKeyFile(keyFile string) option.Option {
-	return OptionWrapper.Wrap(func(opts *Options) {
-		opts.KeyFile = keyFile
 	})
 }
 

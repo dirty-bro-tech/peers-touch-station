@@ -28,6 +28,7 @@ func main() {
 	p := peers.NewPeer()
 	err := p.Init(
 		ctx,
+		service.WithPrivateKey("private.pem"),
 		service.Name("peers-touch-station"),
 		server.WithHandlers(
 			server.NewHandler("hello-world", "/hello", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -41,10 +42,9 @@ func main() {
 		),
 		server.WithSubServer("bootstrapServer",
 			bootstrapP2p.NewBootstrapServer,
-			bootstrap.WithListenAddr("/ip4/0.0.0.0/tcp/4001"),
-			bootstrap.WithKeyFile("demo.key")),
+			bootstrap.WithListenAddr("/ip4/0.0.0.0/tcp/4001")),
 		server.WithSubServer("relyServer", libp2p.NewRelay,
-			relay.KeyFile("demo.key"),
+			relay.KeyFile("libp2pIdentity.key"),
 			relay.Addresses(relay.Addr{
 				HeadProtocol:      relay.HeadProtocolIP4,
 				Address:           "0.0.0.0",
