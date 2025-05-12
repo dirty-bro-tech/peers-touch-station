@@ -8,7 +8,7 @@ import (
 	"github.com/libp2p/go-libp2p/core/network"
 )
 
-func init() {
+func Init() {
 	native.AppendDhtRequestHook(func(ctx context.Context, s network.Stream, req *dht_pb.Message) {
 		connectChan <- connectEvent{
 			peerID: s.Conn().RemotePeer(),

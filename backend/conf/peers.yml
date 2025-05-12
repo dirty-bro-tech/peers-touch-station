@@ -20,4 +20,5 @@ peers:
       retry-interval: 10s
       native:
         enable-mdns: true
-        try-add-peer-manually: true
+        enable-bootstrap: true
+        try-add-peer-manually: false
