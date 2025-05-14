@@ -56,13 +56,13 @@ type Options struct {
 	KeyFile   string
 }
 
-func KeyFile(keyFile string) option.Option {
+func KeyFile(keyFile string) *option.Option {
 	return wrapper.Wrap(func(opts *Options) {
 		opts.KeyFile = keyFile
 	})
 }
 
-func Addresses(adds ...Addr) option.Option {
+func Addresses(adds ...Addr) *option.Option {
 	return wrapper.Wrap(func(opts *Options) {
 		opts.Addresses = append(opts.Addresses, adds...)
 	})

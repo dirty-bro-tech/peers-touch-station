@@ -60,7 +60,7 @@ func (r *Relay) Status() server.ServerStatus {
 	panic("implement me")
 }
 
-func (r *Relay) Init(ctx context.Context, opts ...option.Option) error {
+func (r *Relay) Init(ctx context.Context, opts ...*option.Option) error {
 	for _, o := range opts {
 		r.opts.Apply(o)
 	}
@@ -73,7 +73,7 @@ func (r *Relay) Init(ctx context.Context, opts ...option.Option) error {
 	return nil
 }
 
-func (r *Relay) Start(ctx context.Context, opts ...option.Option) error {
+func (r *Relay) Start(ctx context.Context, opts ...*option.Option) error {
 	var cancel context.CancelFunc
 
 	r.initDoOnce.Do(func() {
@@ -190,7 +190,7 @@ func (r *Relay) isRegisteredWithRelay(h host.Host, relayID peer.ID) bool {
 	return false
 }
 
-func NewRelay(opts ...option.Option) server.SubServer {
+func NewRelay(opts ...*option.Option) server.SubServer {
 	rs := &Relay{
 		opts: relay.BootstrapOptions(),
 	}

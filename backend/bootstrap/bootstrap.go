@@ -36,7 +36,7 @@ type Options struct {
 type Option func(*Options)
 
 // WithListenAddr sets the listen address for the bootstrap server
-func WithListenAddr(addr string) option.Option {
+func WithListenAddr(addr string) *option.Option {
 	return OptionWrapper.Wrap(func(opts *Options) {
 		opts.ListenAddr = addr
 	})
