@@ -65,7 +65,7 @@ func (bs *BootstrapServer) Status() server.ServerStatus {
 	panic("implement me")
 }
 
-func NewBootstrapServer(opts ...option.Option) server.SubServer {
+func NewBootstrapServer(opts ...*option.Option) server.SubServer {
 	bs := &BootstrapServer{
 		opts: bootstrap.BootstrapOptions(),
 	}
@@ -75,7 +75,7 @@ func NewBootstrapServer(opts ...option.Option) server.SubServer {
 }
 
 // Init initializes the bootstrap server
-func (bs *BootstrapServer) Init(ctx context.Context, opts ...option.Option) error {
+func (bs *BootstrapServer) Init(ctx context.Context, opts ...*option.Option) error {
 	for _, o := range opts {
 		bs.opts.Apply(o)
 	}
@@ -110,7 +110,7 @@ func (bs *BootstrapServer) Init(ctx context.Context, opts ...option.Option) erro
 	return nil
 }
 
-func (bs *BootstrapServer) Start(ctx context.Context, opts ...option.Option) error {
+func (bs *BootstrapServer) Start(ctx context.Context, opts ...*option.Option) error {
 	go func() {
 		for {
 			select {
