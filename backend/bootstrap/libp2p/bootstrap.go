@@ -6,7 +6,6 @@ import (
 
 	log "github.com/dirty-bro-tech/peers-touch-go/core/logger"
 	"github.com/dirty-bro-tech/peers-touch-go/core/option"
-	"github.com/dirty-bro-tech/peers-touch-go/core/plugin"
 	"github.com/dirty-bro-tech/peers-touch-go/core/plugin/registry/native"
 	"github.com/dirty-bro-tech/peers-touch-go/core/server"
 	"github.com/dirty-bro-tech/peers-touch-go/core/store"
@@ -95,7 +94,6 @@ func (bs *BootstrapServer) Init(ctx context.Context, opts ...option.Option) erro
 	var err error
 	// todo get rds by config
 	bs.db, err = store.GetRDS(ctx,
-		store.WithQueryStore(plugin.NativePluginName),
 		store.WithRDSName("sqlite"),
 		store.WithRDSDBName("main"),
 	)
