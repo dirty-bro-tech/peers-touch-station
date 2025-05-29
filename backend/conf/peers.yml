@@ -1,4 +1,5 @@
 peers:
+  version: 0.0.1
   run-mode: 2
   includes: store.yml
   config:
@@ -19,6 +20,9 @@ peers:
     registry:
       retry-interval: 10s
       native:
-        enable-mdns: true
-        enable-bootstrap: true
-        try-add-peer-manually: true
+        mdns-enable: true
+        bootstrap-enable: true
+        bootstrap-listen-addr:
+         - /ip4/0.0.0.0/tcp/4001
+        bootstrap-nodes:
+          - /ip4/127.0.0.1/tcp/5001/p2p/12D3KooWC3xvdKMK1mUAzq68Hou9xgcBdeAQ4C9eT3pdXdyZyXC8
