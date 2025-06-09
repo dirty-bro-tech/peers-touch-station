@@ -190,7 +190,7 @@ func (r *Relay) isRegisteredWithRelay(h host.Host, relayID peer.ID) bool {
 	return false
 }
 
-func NewRelay(opts ...option.Option) server.SubServer {
+func NewRelay(opts ...option.Option) server.Subserver {
 	rs := &Relay{
 		opts: relay.BootstrapOptions(),
 	}

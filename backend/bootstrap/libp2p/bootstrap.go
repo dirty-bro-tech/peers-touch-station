@@ -19,7 +19,7 @@ import (
 )
 
 var (
-	_ server.SubServer = (*BootstrapServer)(nil)
+	_ server.Subserver = (*BootstrapServer)(nil)
 )
 
 var (
@@ -64,7 +64,7 @@ func (bs *BootstrapServer) Status() server.ServerStatus {
 	panic("implement me")
 }
 
-func NewBootstrapServer(opts ...option.Option) server.SubServer {
+func NewBootstrapServer(opts ...option.Option) server.Subserver {
 	bs := &BootstrapServer{
 		opts: bootstrap.BootstrapOptions(),
 	}

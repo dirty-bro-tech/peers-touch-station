@@ -10,7 +10,7 @@ var (
 )
 
 type Relay interface {
-	server.SubServer
+	server.Subserver
 
 	Options() Options
 	List(ctx context.Context, opts ...GetOption) ([]Peer, error)

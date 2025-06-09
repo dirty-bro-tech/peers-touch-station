@@ -20,7 +20,7 @@ var OptionWrapper = option.NewWrapper[Options](optionsKey{}, func(options *optio
 
 // Bootstrap defines the interface for bootstrap server functionality
 type Bootstrap interface {
-	server.SubServer
+	server.Subserver
 	ListPeers(ctx context.Context) []peer.ID
 	GetAddrInfo(ctx context.Context) peer.AddrInfo
 }

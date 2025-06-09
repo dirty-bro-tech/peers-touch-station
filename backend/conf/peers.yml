@@ -24,5 +24,7 @@ peers:
         bootstrap-enable: true
         bootstrap-listen-addr:
          - /ip4/0.0.0.0/tcp/4001
+         - /ip4/0.0.0.0/udp/4001/quic-v1
+         - /ip4/0.0.0.0/udp/4001/webrtc-direct
         bootstrap-nodes:
-          - /ip4/127.0.0.1/tcp/5001/p2p/12D3KooWC3xvdKMK1mUAzq68Hou9xgcBdeAQ4C9eT3pdXdyZyXC8
+        #  - /ip4/127.0.0.1/tcp/5001/p2p/12D3KooWC3xvdKMK1mUAzq68Hou9xgcBdeAQ4C9eT3pdXdyZyXC8
