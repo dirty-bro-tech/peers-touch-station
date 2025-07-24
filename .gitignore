@@ -3,3 +3,4 @@ libp2pIdentity.key
 backend/gen/tool/config.yml
 private.pem
 public.pem
+photos-directory

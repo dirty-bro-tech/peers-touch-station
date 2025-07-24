@@ -18,11 +18,11 @@ peers:
         enabled: true
         some-key: some-value
     registry:
-      retry-interval: 10s
+      interval: 180s
       native:
         mdns-enable: true
-        bootstrap-enable: true
+        bootstrap-enable: false
         bootstrap-listen-addr:
-         - /ip4/0.0.0.0/tcp/4001
+          - /ip4/0.0.0.0/tcp/4001
         bootstrap-nodes:
-          - /ip4/127.0.0.1/tcp/5001/p2p/12D3KooWC3xvdKMK1mUAzq68Hou9xgcBdeAQ4C9eT3pdXdyZyXC8
+          - /ip4/127.0.0.1/tcp/5001/p2p/12D3KooWDcXKxox7pJQWo8Yww3KLgFaxES1VpRfnmnnCMJwZzgns

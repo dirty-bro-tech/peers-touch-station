@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/dirty-bro-tech/peers-touch-station/subserver/family"
 	"net/http"
 
 	"github.com/cloudwego/hertz/pkg/app"
@@ -9,10 +10,6 @@ import (
 	"github.com/dirty-bro-tech/peers-touch-go/core/debug/actuator"
 	"github.com/dirty-bro-tech/peers-touch-go/core/server"
 	"github.com/dirty-bro-tech/peers-touch-go/core/service"
-	local "github.com/dirty-bro-tech/peers-touch-station/bootstrap/libp2p"
-	"github.com/dirty-bro-tech/peers-touch-station/relay"
-	"github.com/dirty-bro-tech/peers-touch-station/relay/libp2p"
-
 	// default plugins
 	_ "github.com/dirty-bro-tech/peers-touch-go/core/plugin/native"
 	_ "github.com/dirty-bro-tech/peers-touch-go/core/plugin/registry/native"
@@ -24,8 +21,6 @@ import (
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-
-	local.Init()
 
 	p := peers.NewPeer()
 	err := p.Init(
@@ -43,20 +38,21 @@ func main() {
 			),
 		),
 		server.WithSubServer("debug", actuator.NewDebugSubServer, actuator.WithDebugServerPath("")),
+		server.WithSubServer("family", family.NewPhotoSaveSubServer, family.WithPhotoSaveDir("photos-directory")),
 
 		/*		server.WithSubServer("bootstrapServer",
-				bootstrapP2p.NewBootstrapServer,
-				bootstrap.WithListenAddr("/ip4/0.0.0.0/tcp/4001")),*/
-		server.WithSubServer("relyServer", libp2p.NewRelay,
-			relay.KeyFile("libp2pIdentity.key"),
-			relay.Addresses(relay.Addr{
-				HeadProtocol:      relay.HeadProtocolIP4,
-				Address:           "0.0.0.0",
-				TransportProtocol: relay.TransportProtocolTCP,
-				Port:              4002,
-			},
-			),
-		),
+						bootstrapP2p.NewBootstrapServer,
+						bootstrap.WithListenAddr("/ip4/0.0.0.0/tcp/4001")),
+				server.WithSubServer("relyServer", libp2p.NewRelay,
+					relay_.KeyFile("libp2pIdentity.key"),
+					relay_.Addresses(relay_.Addr{
+						HeadProtocol:      relay_.HeadProtocolIP4,
+						Address:           "0.0.0.0",
+						TransportProtocol: relay_.TransportProtocolTCP,
+						Port:              4002,
+					},
+					),
+				),*/
 	)
 	if err != nil {
 		return
