@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
+	"github.com/dirty-bro-tech/peers-touch-go"
 	"net/http"
 
 	"github.com/cloudwego/hertz/pkg/app"
-	"github.com/dirty-bro-tech/peers-touch-go"
 	"github.com/dirty-bro-tech/peers-touch-go/core/debug/actuator"
 	"github.com/dirty-bro-tech/peers-touch-go/core/server"
 	"github.com/dirty-bro-tech/peers-touch-go/core/service"
@@ -13,6 +13,7 @@ import (
 
 	// default plugins
 	_ "github.com/dirty-bro-tech/peers-touch-go/core/plugin/native"
+	_ "github.com/dirty-bro-tech/peers-touch-go/core/plugin/native/registry"
 	_ "github.com/dirty-bro-tech/peers-touch-go/core/plugin/store/rds/postgres"
 	_ "github.com/dirty-bro-tech/peers-touch-go/core/plugin/store/rds/sqlite"
 )
