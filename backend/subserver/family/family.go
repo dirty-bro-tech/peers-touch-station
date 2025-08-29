@@ -19,6 +19,20 @@ var (
 	_ server.Subserver = (*PhotoSaveSubServer)(nil)
 )
 
+// familyRouterURL implements server.RouterURL for family endpoints
+type familyRouterURL struct {
+	name string
+	url  string
+}
+
+func (f familyRouterURL) Name() string {
+	return f.name
+}
+
+func (f familyRouterURL) URL() string {
+	return f.url
+}
+
 // PhotoSaveSubServer handles photo upload requests
 type PhotoSaveSubServer struct {
 	opts *Options
@@ -48,8 +62,7 @@ func (s *PhotoSaveSubServer) Address() server.SubserverAddress {
 func (s *PhotoSaveSubServer) Handlers() []server.Handler {
 	return []server.Handler{
 		server.NewHandler(
-			"sync",                         // Handler name
-			"/family/photo/sync",           // Endpoint path
+			familyRouterURL{name: "sync", url: "/family/photo/sync"},
 			s.handlePhotoUpload,            // Handler function
 			server.WithMethod(server.POST), // HTTP method
 		),
