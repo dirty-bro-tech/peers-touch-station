@@ -67,14 +67,12 @@ func (s *PhotoSaveSubServer) Handlers() []server.Handler {
 			server.WithMethod(server.POST), // HTTP method
 		),
 		server.NewHandler(
-			"list",                        // Handler name
-			"/family/photo/list",          // Endpoint path
+			familyRouterURL{name: "list", url: "/family/photo/list"},
 			s.handlePhotoList,             // Handler function
 			server.WithMethod(server.GET), // HTTP method
 		),
 		server.NewHandler(
-			"get",                         // Handler name
-			"/family/photo/get",           // Endpoint path
+			familyRouterURL{name: "get", url: "/family/photo/get"},
 			s.handlePhotoGet,              // Handler function
 			server.WithMethod(server.GET), // HTTP method
 		),
@@ -83,7 +81,14 @@ func (s *PhotoSaveSubServer) Handlers() []server.Handler {
 
 // Init initializes the subserver (e.g., load configuration)
 func (s *PhotoSaveSubServer) Init(ctx context.Context, opts ...option.Option) error {
-	// Apply configuration options (e.g., set addresses from opts)
+	// Initialize options if not already set
+	if s.opts == nil {
+		s.opts = &Options{
+			Options: option.GetOptions(opts...),
+			photoSaveDir: "photos-directory", // Default value
+		}
+	}
+	// Apply configuration options
 	for _, opt := range opts {
 		s.opts.Apply(opt)
 	}
@@ -122,8 +127,8 @@ func (s *PhotoSaveSubServer) handlePhotoUpload(ctx context.Context, c *app.Reque
 		return
 	}
 
-	// Create photos-directory/[album] if it doesn't exist
-	uploadDir := filepath.Join("photos-directory", string(album))
+	// Create photoSaveDir/[album] if it doesn't exist
+	uploadDir := filepath.Join(s.opts.photoSaveDir, string(album))
 	if err := os.MkdirAll(uploadDir, 0755); err != nil {
 		c.String(consts.StatusInternalServerError, "Failed to create upload directory: %v", err)
 		return
@@ -144,7 +149,7 @@ func (s *PhotoSaveSubServer) handlePhotoUpload(ctx context.Context, c *app.Reque
 func (s *PhotoSaveSubServer) handlePhotoList(ctx context.Context, c *app.RequestContext) {
 	albumFilter := string(c.Query("album"))
 
-	photosDir := "photos-directory"
+	photosDir := s.opts.photoSaveDir
 	if _, err := os.Stat(photosDir); os.IsNotExist(err) {
 		// Return empty response if photos directory doesn't exist
 		response := model.PhotoListResponse{
@@ -246,7 +251,7 @@ func (s *PhotoSaveSubServer) handlePhotoGet(ctx context.Context, c *app.RequestC
 		return
 	}
 
-	photoPath := filepath.Join("photos-directory", album, filename)
+	photoPath := filepath.Join(s.opts.photoSaveDir, album, filename)
 
 	// Check if file exists
 	if _, err := os.Stat(photoPath); os.IsNotExist(err) {
@@ -309,7 +314,15 @@ func getContentType(filename string) string {
 
 func NewPhotoSaveSubServer(opts ...option.Option) server.Subserver {
 	s := &PhotoSaveSubServer{
-		opts: option.GetOptions(opts...).Ctx().Value(serverOptionsKey{}).(*Options),
+		opts: &Options{
+			Options: option.GetOptions(opts...),
+			photoSaveDir: "photos-directory", // Default value
+		},
+		status: server.StatusStopped,
+	}
+	// Apply any provided options
+	for _, opt := range opts {
+		s.opts.Apply(opt)
 	}
 	return s
 }
