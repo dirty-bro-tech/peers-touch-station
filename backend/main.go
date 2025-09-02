@@ -26,21 +26,10 @@ func main() {
 		service.WithPrivateKey("private.pem"),
 		service.Name("peers-touch-station"),
 		server.WithSubServer("debug", actuator.NewDebugSubServer, actuator.WithDebugServerPath("")),
-		server.WithSubServer("family", family.NewPhotoSaveSubServer, family.WithPhotoSaveDir("photos-directory")),
-
-		/*		server.WithSubServer("bootstrapServer",
-						bootstrapP2p.NewBootstrapServer,
-						bootstrap.WithListenAddr("/ip4/0.0.0.0/tcp/4001")),
-				server.WithSubServer("relyServer", libp2p.NewRelay,
-					relay_.KeyFile("libp2pIdentity.key"),
-					relay_.Addresses(relay_.Addr{
-						HeadProtocol:      relay_.HeadProtocolIP4,
-						Address:           "0.0.0.0",
-						TransportProtocol: relay_.TransportProtocolTCP,
-						Port:              4002,
-					},
-					),
-				),*/
+		// Use the new router pattern for family endpoints
+		server.WithRouters(family.NewFamilyRouter()),
+		// Initialize family options
+		family.WithPhotoSaveDir("photos-directory"),
 	)
 	if err != nil {
 		return

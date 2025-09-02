@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -22,15 +23,15 @@ var (
 // familyRouterURL implements server.RouterURL for family endpoints
 type familyRouterURL struct {
 	name string
-	url  string
+	path string
+}
+
+func (f familyRouterURL) SubPath() string {
+	return f.path
 }
 
 func (f familyRouterURL) Name() string {
 	return f.name
-}
-
-func (f familyRouterURL) URL() string {
-	return f.url
 }
 
 // PhotoSaveSubServer handles photo upload requests
@@ -62,17 +63,17 @@ func (s *PhotoSaveSubServer) Address() server.SubserverAddress {
 func (s *PhotoSaveSubServer) Handlers() []server.Handler {
 	return []server.Handler{
 		server.NewHandler(
-			familyRouterURL{name: "sync", url: "/family/photo/sync"},
+			familyRouterURL{name: "family", path: "/photo/sync"},
 			s.handlePhotoUpload,            // Handler function
 			server.WithMethod(server.POST), // HTTP method
 		),
 		server.NewHandler(
-			familyRouterURL{name: "list", url: "/family/photo/list"},
+			familyRouterURL{name: "family", path: "/photo/list"},
 			s.handlePhotoList,             // Handler function
 			server.WithMethod(server.GET), // HTTP method
 		),
 		server.NewHandler(
-			familyRouterURL{name: "get", url: "/family/photo/get"},
+			familyRouterURL{name: "family", path: "/photo/get"},
 			s.handlePhotoGet,              // Handler function
 			server.WithMethod(server.GET), // HTTP method
 		),
@@ -84,7 +85,7 @@ func (s *PhotoSaveSubServer) Init(ctx context.Context, opts ...option.Option) er
 	// Initialize options if not already set
 	if s.opts == nil {
 		s.opts = &Options{
-			Options: option.GetOptions(opts...),
+			Options:      option.GetOptions(opts...),
 			photoSaveDir: "photos-directory", // Default value
 		}
 	}
@@ -123,25 +124,43 @@ func (s *PhotoSaveSubServer) handlePhotoUpload(ctx context.Context, c *app.Reque
 
 	file, err := c.FormFile("photo")
 	if err != nil {
+		log.Printf("[PhotoSaveSubServer] Failed to get photo file: %v", err)
 		c.String(consts.StatusBadRequest, "Missing photo file: %v", err)
+		return
+	}
+
+	// Validate file size (e.g., max 50MB)
+	if file.Size > 50*1024*1024 {
+		log.Printf("[PhotoSaveSubServer] File too large: %d bytes", file.Size)
+		c.String(consts.StatusBadRequest, "File too large (max 50MB)")
+		return
+	}
+
+	// Validate file type
+	if !isImageFile(file.Filename) {
+		log.Printf("[PhotoSaveSubServer] Invalid file type: %s", file.Filename)
+		c.String(consts.StatusBadRequest, "Only image files are allowed")
 		return
 	}
 
 	// Create photoSaveDir/[album] if it doesn't exist
 	uploadDir := filepath.Join(s.opts.photoSaveDir, string(album))
 	if err := os.MkdirAll(uploadDir, 0755); err != nil {
+		log.Printf("[PhotoSaveSubServer] Failed to create upload directory %s: %v", uploadDir, err)
 		c.String(consts.StatusInternalServerError, "Failed to create upload directory: %v", err)
 		return
 	}
 	// Construct full save path within album subdirectory
 	savePath := filepath.Join(uploadDir, file.Filename)
 
-	// Save the uploaded file (existing logic remains unchanged)
+	// Save the uploaded file
 	if err := c.SaveUploadedFile(file, savePath); err != nil {
+		log.Printf("[PhotoSaveSubServer] Failed to save photo %s: %v", savePath, err)
 		c.String(consts.StatusInternalServerError, "Failed to save photo: %v", err)
 		return
 	}
 
+	log.Printf("[PhotoSaveSubServer] Photo saved successfully: %s (size: %d bytes) in album: %s", file.Filename, file.Size, album)
 	c.String(consts.StatusOK, "Photo received: %s (size: %d bytes) in album: %s", file.Filename, file.Size, album)
 }
 
@@ -166,6 +185,7 @@ func (s *PhotoSaveSubServer) handlePhotoList(ctx context.Context, c *app.Request
 	// Read all album directories
 	albumDirs, err := os.ReadDir(photosDir)
 	if err != nil {
+		log.Printf("[PhotoSaveSubServer] Failed to read photos directory %s: %v", photosDir, err)
 		c.String(consts.StatusInternalServerError, "Failed to read photos directory: %v", err)
 		return
 	}
@@ -184,6 +204,7 @@ func (s *PhotoSaveSubServer) handlePhotoList(ctx context.Context, c *app.Request
 		albumPath := filepath.Join(photosDir, albumName)
 		photoFiles, err := os.ReadDir(albumPath)
 		if err != nil {
+			log.Printf("[PhotoSaveSubServer] Failed to read album directory %s: %v", albumPath, err)
 			continue // Skip albums that can't be read
 		}
 
@@ -255,6 +276,7 @@ func (s *PhotoSaveSubServer) handlePhotoGet(ctx context.Context, c *app.RequestC
 
 	// Check if file exists
 	if _, err := os.Stat(photoPath); os.IsNotExist(err) {
+		log.Printf("[PhotoSaveSubServer] Photo not found: %s", photoPath)
 		c.String(consts.StatusNotFound, "Photo not found")
 		return
 	}
@@ -262,6 +284,7 @@ func (s *PhotoSaveSubServer) handlePhotoGet(ctx context.Context, c *app.RequestC
 	// Open and serve the file
 	file, err := os.Open(photoPath)
 	if err != nil {
+		log.Printf("[PhotoSaveSubServer] Failed to open photo %s: %v", photoPath, err)
 		c.String(consts.StatusInternalServerError, "Failed to open photo: %v", err)
 		return
 	}
@@ -274,9 +297,12 @@ func (s *PhotoSaveSubServer) handlePhotoGet(ctx context.Context, c *app.RequestC
 
 	// Copy file content to response
 	if _, err := io.Copy(c.Response.BodyWriter(), file); err != nil {
+		log.Printf("[PhotoSaveSubServer] Failed to serve photo %s: %v", photoPath, err)
 		c.String(consts.StatusInternalServerError, "Failed to serve photo: %v", err)
 		return
 	}
+
+	log.Printf("[PhotoSaveSubServer] Photo served successfully: %s", photoPath)
 }
 
 // isImageFile checks if the filename has an image extension
@@ -315,7 +341,7 @@ func getContentType(filename string) string {
 func NewPhotoSaveSubServer(opts ...option.Option) server.Subserver {
 	s := &PhotoSaveSubServer{
 		opts: &Options{
-			Options: option.GetOptions(opts...),
+			Options:      option.GetOptions(opts...),
 			photoSaveDir: "photos-directory", // Default value
 		},
 		status: server.StatusStopped,

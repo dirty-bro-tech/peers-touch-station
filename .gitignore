@@ -5,3 +5,4 @@ private.pem
 public.pem
 gen/
 photos-directory
+*.key
