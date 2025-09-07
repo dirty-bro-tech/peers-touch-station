@@ -1,4 +1,4 @@
-package family
+package station
 
 import (
 	"context"
@@ -13,25 +13,25 @@ import (
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
 	"github.com/dirty-bro-tech/peers-touch-go/core/option"
 	"github.com/dirty-bro-tech/peers-touch-go/core/server"
-	"github.com/dirty-bro-tech/peers-touch-station/subserver/family/model"
+	"github.com/dirty-bro-tech/peers-touch-station/subserver/station/model"
 )
 
 var (
 	_ server.Subserver = (*PhotoSaveSubServer)(nil)
 )
 
-// familyRouterURL implements server.RouterURL for family endpoints
-type familyRouterURL struct {
+// stationRouterURL implements server.RouterURL for station endpoints
+type stationRouterURL struct {
 	name string
 	path string
 }
 
-func (f familyRouterURL) SubPath() string {
-	return f.path
+func (s stationRouterURL) SubPath() string {
+	return s.path
 }
 
-func (f familyRouterURL) Name() string {
-	return f.name
+func (s stationRouterURL) Name() string {
+	return s.name
 }
 
 // PhotoSaveSubServer handles photo upload requests
@@ -63,18 +63,34 @@ func (s *PhotoSaveSubServer) Address() server.SubserverAddress {
 func (s *PhotoSaveSubServer) Handlers() []server.Handler {
 	return []server.Handler{
 		server.NewHandler(
-			familyRouterURL{name: "family", path: "/photo/sync"},
+			stationRouterURL{name: "station", path: "/photo/sync"},
 			s.handlePhotoUpload,            // Handler function
 			server.WithMethod(server.POST), // HTTP method
 		),
 		server.NewHandler(
-			familyRouterURL{name: "family", path: "/photo/list"},
+			stationRouterURL{name: "station", path: "/photo/list"},
 			s.handlePhotoList,             // Handler function
 			server.WithMethod(server.GET), // HTTP method
 		),
 		server.NewHandler(
-			familyRouterURL{name: "family", path: "/photo/get"},
+			stationRouterURL{name: "station", path: "/photo/get"},
 			s.handlePhotoGet,              // Handler function
+			server.WithMethod(server.GET), // HTTP method
+		),
+		// Avatar endpoints
+		server.NewHandler(
+			stationRouterURL{name: "station", path: "/avatar/upload"},
+			AvatarUploadHandler,           // Handler function
+			server.WithMethod(server.POST), // HTTP method
+		),
+		server.NewHandler(
+			stationRouterURL{name: "station", path: "/avatar/list/:user_id"},
+			GetUserAvatarsHandler,         // Handler function
+			server.WithMethod(server.GET), // HTTP method
+		),
+		server.NewHandler(
+			stationRouterURL{name: "station", path: "/avatar/:user_id/:filename"},
+			s.handleAvatarGet,             // Handler function for serving avatar images
 			server.WithMethod(server.GET), // HTTP method
 		),
 	}
@@ -94,6 +110,52 @@ func (s *PhotoSaveSubServer) Init(ctx context.Context, opts ...option.Option) er
 		s.opts.Apply(opt)
 	}
 	return nil
+}
+
+// handleAvatarGet serves avatar images from the filesystem
+func (s *PhotoSaveSubServer) handleAvatarGet(ctx context.Context, c *app.RequestContext) {
+	// Get user ID and filename from path parameters
+	userID := c.Param("user_id")
+	filename := c.Param("filename")
+
+	if userID == "" || filename == "" {
+		c.String(consts.StatusBadRequest, "Missing user_id or filename")
+		return
+	}
+
+	// Construct file path
+	avatarPath := filepath.Join("data", "photos", AvatarDir, userID, filename)
+
+	// Check if file exists
+	if _, err := os.Stat(avatarPath); os.IsNotExist(err) {
+		c.String(consts.StatusNotFound, "Avatar not found")
+		return
+	}
+
+	// Determine content type based on file extension
+	ext := strings.ToLower(filepath.Ext(filename))
+	contentType := getImageMimeType(ext)
+
+	// Open and serve the file
+	file, err := os.Open(avatarPath)
+	if err != nil {
+		c.String(consts.StatusInternalServerError, "Failed to open avatar file")
+		return
+	}
+	defer file.Close()
+
+	// Set content type header
+	c.Header("Content-Type", contentType)
+
+	// Read file data
+	fileData, err := io.ReadAll(file)
+	if err != nil {
+		c.String(consts.StatusInternalServerError, "Failed to read avatar file")
+		return
+	}
+
+	// Write file data to response
+	c.Data(consts.StatusOK, contentType, fileData)
 }
 
 // Start begins listening for requests

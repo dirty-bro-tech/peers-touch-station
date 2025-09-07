@@ -1,5 +1,8 @@
 package main
 
+// This file should be run separately as a code generation tool
+// Run with: go run gen/tool/gorm_gen.go
+
 import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gen"

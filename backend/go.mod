@@ -19,10 +19,14 @@ require (
 	github.com/dirty-bro-tech/peers-touch-go/core/plugin/store/rds/postgres v0.0.0-00010101000000-000000000000
 	github.com/dirty-bro-tech/peers-touch-go/core/plugin/store/rds/sqlite v0.0.0-00010101000000-000000000000
 	github.com/libp2p/go-libp2p v0.43.0
+	gorm.io/driver/postgres v1.5.11
+	gorm.io/gen v0.3.27
+	gorm.io/gorm v1.25.12
 )
 
 require (
 	dario.cat/mergo v1.0.1 // indirect
+	filippo.io/edwards25519 v1.1.0 // indirect
 	git.sr.ht/~mariusor/go-xsd-duration v0.0.0-20220703122237-02e73435a078 // indirect
 	github.com/BurntSushi/toml v1.4.0 // indirect
 	github.com/benbjohnson/clock v1.3.5 // indirect
@@ -47,6 +51,8 @@ require (
 	github.com/go-log/log v0.2.0 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
+	github.com/go-sql-driver/mysql v1.8.1 // indirect
+	github.com/golang-jwt/jwt/v5 v5.3.0 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/gopacket v1.1.19 // indirect
 	github.com/google/uuid v1.6.0 // indirect
@@ -62,7 +68,7 @@ require (
 	github.com/ipfs/go-log/v2 v2.8.1 // indirect
 	github.com/ipld/go-ipld-prime v0.21.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
-	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
+	github.com/jackc/pgservicefile v0.0.0-20231201235250-de7065d80cb9 // indirect
 	github.com/jackc/pgx/v5 v5.5.5 // indirect
 	github.com/jackc/puddle/v2 v2.2.1 // indirect
 	github.com/jackpal/go-nat-pmp v1.0.2 // indirect
@@ -167,8 +173,10 @@ require (
 	gonum.org/v1/gonum v0.16.0 // indirect
 	google.golang.org/protobuf v1.36.7 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gorm.io/driver/postgres v1.5.11 // indirect
+	gorm.io/datatypes v1.2.4 // indirect
+	gorm.io/driver/mysql v1.5.6 // indirect
 	gorm.io/driver/sqlite v1.5.7 // indirect
-	gorm.io/gorm v1.25.12 // indirect
+	gorm.io/hints v1.1.0 // indirect
+	gorm.io/plugin/dbresolver v1.5.0 // indirect
 	lukechampine.com/blake3 v1.4.1 // indirect
 )

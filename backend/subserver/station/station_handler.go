@@ -1,4 +1,4 @@
-package family
+package station
 
 import (
 	"context"
@@ -13,11 +13,11 @@ import (
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
 	"github.com/dirty-bro-tech/peers-touch-go/core/option"
 	"github.com/dirty-bro-tech/peers-touch-go/core/server"
-	"github.com/dirty-bro-tech/peers-touch-station/subserver/family/model"
+	"github.com/dirty-bro-tech/peers-touch-station/subserver/station/model"
 )
 
-// FamilyHandlerInfo represents a single handler's information
-type FamilyHandlerInfo struct {
+// StationHandlerInfo represents a single handler's information
+type StationHandlerInfo struct {
 	RouterURL RouterPath
 	Handler   func(context.Context, *app.RequestContext)
 	Method    server.Method
@@ -31,31 +31,31 @@ func getPhotoSaveDir() string {
 		return "photos-directory" // Default value
 	}
 
-	familyOpts := opts.Ctx().Value(serverOptionsKey{}).(*Options)
-	if familyOpts == nil || familyOpts.photoSaveDir == "" {
+	stationOpts := opts.Ctx().Value(serverOptionsKey{}).(*Options)
+	if stationOpts == nil || stationOpts.photoSaveDir == "" {
 		return "photos-directory" // Default value
 	}
 
-	return familyOpts.photoSaveDir
+	return stationOpts.photoSaveDir
 }
 
-// GetFamilyHandlers returns all family handler configurations
-func GetFamilyHandlers() []FamilyHandlerInfo {
-	return []FamilyHandlerInfo{
+// GetStationHandlers returns all station handler configurations
+func GetStationHandlers() []StationHandlerInfo {
+	return []StationHandlerInfo{
 		{
-			RouterURL: RouterURLFamilyPhotoSync,
+			RouterURL: RouterURLStationPhotoSync,
 			Handler:   PhotoUploadHandler,
 			Method:    server.POST,
 			Wrappers:  []server.Wrapper{},
 		},
 		{
-			RouterURL: RouterURLFamilyPhotoList,
+			RouterURL: RouterURLStationPhotoList,
 			Handler:   PhotoListHandler,
 			Method:    server.GET,
 			Wrappers:  []server.Wrapper{},
 		},
 		{
-			RouterURL: RouterURLFamilyPhotoGet,
+			RouterURL: RouterURLStationPhotoGet,
 			Handler:   PhotoGetHandler,
 			Method:    server.GET,
 			Wrappers:  []server.Wrapper{},
@@ -76,21 +76,21 @@ func PhotoUploadHandler(ctx context.Context, c *app.RequestContext) {
 
 	file, err := c.FormFile("photo")
 	if err != nil {
-		log.Printf("[FamilyHandler] Failed to get photo file: %v", err)
+		log.Printf("[StationHandler] Failed to get photo file: %v", err)
 		c.String(consts.StatusBadRequest, "Missing photo file: %v", err)
 		return
 	}
 
 	// Validate file size (e.g., max 50MB)
 	if file.Size > 50*1024*1024 {
-		log.Printf("[FamilyHandler] File too large: %d bytes", file.Size)
+		log.Printf("[StationHandler] File too large: %d bytes", file.Size)
 		c.String(consts.StatusBadRequest, "File too large (max 50MB)")
 		return
 	}
 
 	// Validate file type
 	if !isImageFile(file.Filename) {
-		log.Printf("[FamilyHandler] Invalid file type: %s", file.Filename)
+		log.Printf("[StationHandler] Invalid file type: %s", file.Filename)
 		c.String(consts.StatusBadRequest, "Only image files are allowed")
 		return
 	}
@@ -101,7 +101,7 @@ func PhotoUploadHandler(ctx context.Context, c *app.RequestContext) {
 	// Create photoSaveDir/[album] if it doesn't exist
 	uploadDir := filepath.Join(photoSaveDir, album)
 	if err := os.MkdirAll(uploadDir, 0755); err != nil {
-		log.Printf("[FamilyHandler] Failed to create upload directory %s: %v", uploadDir, err)
+		log.Printf("[StationHandler] Failed to create upload directory %s: %v", uploadDir, err)
 		c.String(consts.StatusInternalServerError, "Failed to create upload directory: %v", err)
 		return
 	}
@@ -111,12 +111,12 @@ func PhotoUploadHandler(ctx context.Context, c *app.RequestContext) {
 
 	// Save the uploaded file
 	if err := c.SaveUploadedFile(file, savePath); err != nil {
-		log.Printf("[FamilyHandler] Failed to save photo %s: %v", savePath, err)
+		log.Printf("[StationHandler] Failed to save photo %s: %v", savePath, err)
 		c.String(consts.StatusInternalServerError, "Failed to save photo: %v", err)
 		return
 	}
 
-	log.Printf("[FamilyHandler] Photo saved successfully: %s (size: %d bytes) in album: %s", file.Filename, file.Size, album)
+	log.Printf("[StationHandler] Photo saved successfully: %s (size: %d bytes) in album: %s", file.Filename, file.Size, album)
 	c.String(consts.StatusOK, "Photo received: %s (size: %d bytes) in album: %s", file.Filename, file.Size, album)
 }
 
@@ -143,7 +143,7 @@ func PhotoListHandler(ctx context.Context, c *app.RequestContext) {
 	// Read all album directories
 	albumDirs, err := os.ReadDir(photoSaveDir)
 	if err != nil {
-		log.Printf("[FamilyHandler] Failed to read photos directory %s: %v", photoSaveDir, err)
+		log.Printf("[StationHandler] Failed to read photos directory %s: %v", photoSaveDir, err)
 		c.String(consts.StatusInternalServerError, "Failed to read photos directory: %v", err)
 		return
 	}
@@ -162,7 +162,7 @@ func PhotoListHandler(ctx context.Context, c *app.RequestContext) {
 		albumPath := filepath.Join(photoSaveDir, albumName)
 		photoFiles, err := os.ReadDir(albumPath)
 		if err != nil {
-			log.Printf("[FamilyHandler] Failed to read album directory %s: %v", albumPath, err)
+			log.Printf("[StationHandler] Failed to read album directory %s: %v", albumPath, err)
 			continue // Skip albums that can't be read
 		}
 
@@ -237,7 +237,7 @@ func PhotoGetHandler(ctx context.Context, c *app.RequestContext) {
 
 	// Check if file exists
 	if _, err := os.Stat(photoPath); os.IsNotExist(err) {
-		log.Printf("[FamilyHandler] Photo not found: %s", photoPath)
+		log.Printf("[StationHandler] Photo not found: %s", photoPath)
 		c.String(consts.StatusNotFound, "Photo not found")
 		return
 	}
@@ -245,7 +245,7 @@ func PhotoGetHandler(ctx context.Context, c *app.RequestContext) {
 	// Open and serve the file
 	file, err := os.Open(photoPath)
 	if err != nil {
-		log.Printf("[FamilyHandler] Failed to open photo %s: %v", photoPath, err)
+		log.Printf("[StationHandler] Failed to open photo %s: %v", photoPath, err)
 		c.String(consts.StatusInternalServerError, "Failed to open photo: %v", err)
 		return
 	}
@@ -258,10 +258,10 @@ func PhotoGetHandler(ctx context.Context, c *app.RequestContext) {
 
 	// Copy file content to response
 	if _, err := io.Copy(c.Response.BodyWriter(), file); err != nil {
-		log.Printf("[FamilyHandler] Failed to serve photo %s: %v", photoPath, err)
+		log.Printf("[StationHandler] Failed to serve photo %s: %v", photoPath, err)
 		c.String(consts.StatusInternalServerError, "Failed to serve photo: %v", err)
 		return
 	}
 
-	log.Printf("[FamilyHandler] Photo served successfully: %s", photoPath)
+	log.Printf("[StationHandler] Photo served successfully: %s", photoPath)
 }

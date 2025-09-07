@@ -7,7 +7,7 @@ import (
 	"github.com/dirty-bro-tech/peers-touch-go/core/debug/actuator"
 	"github.com/dirty-bro-tech/peers-touch-go/core/server"
 	"github.com/dirty-bro-tech/peers-touch-go/core/service"
-	"github.com/dirty-bro-tech/peers-touch-station/subserver/family"
+	"github.com/dirty-bro-tech/peers-touch-station/subserver/station"
 
 	// default plugins
 	_ "github.com/dirty-bro-tech/peers-touch-go/core/plugin/native"
@@ -26,10 +26,10 @@ func main() {
 		service.WithPrivateKey("private.pem"),
 		service.Name("peers-touch-station"),
 		server.WithSubServer("debug", actuator.NewDebugSubServer, actuator.WithDebugServerPath("")),
-		// Use the new router pattern for family endpoints
-		server.WithRouters(family.NewFamilyRouter()),
-		// Initialize family options
-		family.WithPhotoSaveDir("photos-directory"),
+		// Use the new router pattern for station endpoints
+		server.WithRouters(station.NewStationRouter()),
+		// Initialize station options
+		station.WithPhotoSaveDir("photos-directory"),
 	)
 	if err != nil {
 		return
